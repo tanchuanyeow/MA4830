@@ -1,2 +1,5 @@
 # MA4830
 Minor CA
+This projectile calculation program can calculate the distance travelled by the projectile with a values of launch velocity magnitude, launch angle, and launch height. The program provides two types of calculation. First type is giving specific distance based on single value of launch velocity magnitude, launch angle, and launch height. Second type is give a range of distance of projectile based on range of values of the three coefficients above.
+Basically, user just need to input the starting and ending of input range, the program will able to run the calculation within this range of values. For just demonstration purposes, we had set it to just give 5 samples. Then it will display the results in a tabulated form in the terminal. As mention in the requirement, there will be 3 tables displayed. Each of the tables are showing the range of distance based on the range of launch velocity, launch angle or launch height. The other parameter will be constant which given by the user in the beginning. 
+After the calculation, the program will allow user to choose whether user want another calculation or terminate the program.
