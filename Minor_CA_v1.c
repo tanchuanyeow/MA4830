@@ -5,68 +5,64 @@
 #include <string.h>
 
 char s[10];
+const string order[5]
+order[0] = "first";
+order[1] = "Second";
+order[2] = "Third";
+order[3] = "Fourth";
+order[4] = "Fifth";
+int value:
 float vel,height,theta;
 float g = 9.81;
-float launch_vel[5];
-float launch_ang[5];
-float launch_height[5];
-float distance1[5]; //to store range of distance based on range of velocity
-float distance2[5]; //to store range of distance based on range of angle
-float distance3[5]; //to store range of distance based on range of height
+float range[5];
+float distance[5]; //to store range of distance based on range of velocity
+
+void init() //to initialize all the array and other variable as 0 after every calculation.
+{
+    int count1;
+    for(count1=0;count<5;count++)
+    {
+            range[count1]=0;
+            distance[count1]=0;
+    }
+    vel=0;
+    height=0;
+    theta=0;
+    value=0;
+}
 
 float calculation (float v,float a,float h) // v is input of mag of vel, a is input of angle, h is input of height
 {
     float z,d;
-    a = a * 3.141592654 / 180;
-    //printf("%f\n", sin(a));
-    z = 1 + sqrt(1 + 2 * g * h / ( v * v * sin(a) * sin(a)));
-    //printf("%f\n", z);
+    a = a * 3.141592654 / 180; //to convert degree into radian
+    z = 1 + sqrt(1 + 2 * g * h / ( v * v * sin(a) * sin(a))); //z is to calculation the equation within the bracket first
     d = v * v / (2*g) * z * sin(2*a);
     return d;
 }
 
-/*void velrange_cal(float start,float end)//auto calculate 5 samples of range of values of velocity magnitude
-{
-    int range = 1;
-    for(range=1;range<=3;range++)
-    {
-        launch_vel[range]= launch_vel[range-1]+((end-start)/4);
-    }
-}
-void angrange_cal(float start,float end)//auto calculate 5 samples of range of values of launch angle
-{
-    int range = 1;
-    for(range=1;range<=3;range++)
-    {
-        launch_ang[range]= launch_ang[range-1]+((end-start)/4);
-    }
-}
-void heightrange_cal(float start,float end)//auto calculate 5 samples of range of values of launch height
-{
-    int range = 1;
-    for(range=1;range<=3;range++)
-    {
-        launch_height[range]= launch_height[range-1]+((end-start)/4);
-    }
-}*/
-void drange_cal() //auto calculate 5 samples of range of distance based on different kind of range input
+void drange_cal_vel() //calculate the distance base on range of value of velocity and printed out in table form
 {
     int count;
+    printf("Range of distance from range of velocity\n");
+    printf("velocity\tangle\theight\tdistance\n");
     for(count=0;count<5;count++)
     {
-        distance1[count]=calculation(launch_vel[count],theta,height);
-        distance2[count]=calculation(vel,launch_ang[count],height);
-        distance3[count]=calculation(vel,theta,launch_height[count]);
+        distance[count]=calculation(launch_vel[count],theta,height);
+        printf("%f\t%f\t%f\t%f\n",launch_vel[i],theta,height,distance[i]);
+        //distance[count]=calculation(vel,launch_ang[count],height);
+        //distance[count]=calculation(vel,theta,launch_height[count]);
     }
 }
-void velocity_table()
+
+/*void velocity_table()
 {
+    int j;
     printf("Range of distance from range of velocity\n");
-    printf("velocity\t%f\t%f\t%f\t%f\t%f\n",launch_vel[0],launch_vel[1],launch_vel[2],launch_vel[3],launch_vel[4]);
-    printf("angle   \t%f\t%f\t%f\t%f\t%f\n",theta,theta,theta,theta,theta);
-    printf("height  \t%f\t%f\t%f\t%f\t%f\n",height,height,height,height,height);
-    printf("Distance\t%f\t%f\t%f\t%f\t%f\n",distance1[0],distance1[1],distance1[2],distance1[3],distance1[4]);
+    printf("velocity\tangle\theight\tdistance\n");
+    for(j=0;j<5;j++)
+        printf("%f\t%f\t%f\t%f\n",launch_vel[i],theta,height,distance[i]);
 }
+
 void angular_table()
 {
     printf("Range of distance from range of velocity\n");
@@ -82,9 +78,9 @@ void height_table()
     printf("angle   \t%f\t%f\t%f\t%f\t%f\n",theta,theta,theta,theta,theta);
     printf("height  \t%f\t%f\t%f\t%f\t%f\n",launch_height[0],launch_height[1],launch_height[2],launch_height[3],launch_height[4]);
     printf("Distance\t%f\t%f\t%f\t%f\t%f\n",distance1[0],distance1[1],distance1[2],distance1[3],distance1[4]);
-}
+}*/
 
-float checkInput(char input[])
+float checkInput(char input[]) //check for the validity of value input.
 {
     int i;
 
@@ -110,65 +106,184 @@ float checkInput(char input[])
     return atof(input);
 }
 
+void velocitycompile()
+{
+    int z;
+   
+    printf("How many value you want to key in? (max 5 values): ");
+    scanf("%d",&value);
+    while(value>5)
+    {
+        printf("Please key the suitable value\n");
+        scanf("%d",&value);
+    }
+    
+    for(z=0;z<value,z++)
+    {
+        printf("Please key in %c value of velocity: ",&order[z]);
+        scanf("%s",&s);
+        while (checkInput(s) == -1.0)
+        {
+            printf("Please key in the correct value of velocity: ");
+            scanf("%s",&s);
+        }
+        range[z] = checkInput(s);
+    printf("Initial velocity: %f m/s\n", range[z]);
+    fflush(stdin);
+    }
+    
+    printf("Please key in the angle: ");
+    scanf("%s",&s);
+    while (checkInput(s) == -1.0)
+    {
+        printf("Please key in the correct value of angle: ");
+        scanf("%s",&s);
+    }
+    theta = checkInput(s);
+    printf("Initial angle: %f m/s\n", theta);
+    fflush(stdin);
+    
+    printf("Please key in the height y0: ");
+    scanf("%s",&s);
+    while (checkInput(s) == -1.0)
+    {
+        printf("Please key in the correct value of height y0: ");
+        scanf("%s",&s);
+    }
+    height = checkInput(s);
+    printf("launch height y0: %f m\n", height);
+    fflush(stdin);
+    
+    drange_cal_vel(); 
+}
+
+void anglecompile()
+{
+    int y;
+   
+    printf("How many value you want to key in? (max 5 values): ");
+    scanf("%d",&value);
+    while(value>5||value=0)
+    {
+        printf("Please key the suitable value\n");
+        scanf("%d",&value);
+    }
+    
+    for(y=0;y<value,y++)
+    {
+        printf("Please key in %c value of angle: ",&order[y]);
+        scanf("%s",&s);
+        while (checkInput(s) == -1.0)
+        {
+            printf("Please key in the correct value of angle v: ");
+            scanf("%s",&s);
+        }
+        range[y] = checkInput(s);
+    printf("Initial angle: %f m/s\n", range[y]);
+    fflush(stdin);
+    }
+    
+    printf("Please key in the velocity: ");
+    scanf("%s",&s);
+    while (checkInput(s) == -1.0)
+    {
+        printf("Please key in the correct value of velocity v: ");
+        scanf("%s",&s);
+    }
+    vel = checkInput(s);
+    printf("Initial velocity: %f m/s\n", vel);
+    fflush(stdin);
+    
+    printf("Please key in the height y0: ");
+    scanf("%s",&s);
+    while (checkInput(s) == -1.0)
+    {
+        printf("Please key in the correct value of launch height y0: ");
+        scanf("%s",&s);
+    }
+    height = checkInput(s);
+    printf("launch height y0: %f m\n", height);
+    fflush(stdin);
+    
+    drange_cal_vel();    
+}
+
+void heightcompile()
+{
+    int x;
+   
+    printf("How many value you want to key in? (max 5 values): ");
+    scanf("%d",&value);
+    while(value>5)
+    {
+        printf("Please key the suitable value\n");
+        scanf("%d",&value);
+    }
+    
+    for(x=0;x<value,x++)
+    {
+        printf("Please key in %c value of angle: ",&order[x]);
+        scanf("%s",&s);
+        while (checkInput(s) == -1.0)
+        {
+            printf("Please key in the correct value of height y0: ");
+            scanf("%s",&s);
+        }
+        range[x] = checkInput(s);
+    printf("Initial angle: %f m/s\n", range[x]);
+    fflush(stdin);
+    }
+    
+    printf("Please key in the velocity: ");
+    scanf("%s",&s);
+    while (checkInput(s) == -1.0)
+    {
+        printf("Please key in the correct value of velocity v: ");
+        scanf("%s",&s);
+    }
+    vel = checkInput(s);
+    printf("Initial velocity: %f m/s\n", vel);
+    fflush(stdin);
+    
+    printf("Please key in the launch angle: ");
+    scanf("%s",&s);
+    while (checkInput(s) == -1.0)
+    {
+        printf("Please key in the correct value of launch angle: ");
+        scanf("%s",&s);
+    }
+    theta = checkInput(s);
+    printf("launch angle: %f m\n", theta);
+    fflush(stdin);
+    
+    drange_cal_vel();    
+}
+
 int main()
 {
+    char userchoice;
     char respond;
     while(1)
     {
-        //Single value input and output
-        printf("This program is to compute the trajectory of a projectile.\n");
-
-        printf("Enter the magnitude of launch velocity v: ");
-        scanf("%s",&s);
-        while (checkInput(s) == -1.0)
+        //Let user to choose the value they want to vary
+        printf("Select the value you want to vary:(v for velocity, a for angle, h for height): ");
+        scanf("%c",&userchoice);
+        while(userchoice!='c'&&userchoice!='a'&&userchoice!='h')
         {
-                printf("Enter the magnitude of launch velocity v: ");
-                scanf("%s",&s);
+            printf("Please key the correct choice\n");
+            scanf("%c",userchoice);
         }
-        vel = checkInput(s);
-        printf("Initial velocity: %f m/s\n", vel);
-        fflush(stdin);
-
-        printf("Enter launch angle theta in degree: ");
-        scanf("%s",&s);
-        while (checkInput(s) == -1.0)
+        switch(userchoice)
         {
-                printf("Enter launch angle theta in degree: ");
-                scanf("%s",&s);
+            case 'v': velocitycompile();
+                break;
+            case 'a': anglecompile();
+                break;
+            case 'h': heightcompile();
+                break;
         }
-        theta = checkInput(s);
-        printf("Projectile angle in degree: %f\n", theta);
-        fflush(stdin);
-
-        printf("Enter the magnitude of launch height y0: ");
-        scanf("%s",&s);
-        while (checkInput(s) == -1.0)
-        {
-                printf("Enter the magnitude of launch height y0: ");
-                scanf("%s",&s);
-        }
-        height = checkInput(s);
-        printf("launch height y0: %f m\n", height);
-        fflush(stdin);
-
-        printf("The total horizontal distance traveled by the projectile is %f\n", calculation(vel,theta,height));
-
-        //Range of value of input and output
-        printf("Enter 5 values of launch velocity: ");
-        scanf("%f %f %f %f %f",&launch_vel[0],&launch_vel[1],&launch_vel[2],&launch_vel[3],&launch_vel[4]);
-        fflush(stdin);
-        printf("Enter 5 values of launch angle: ");
-        scanf("%f %f %f %f %f",&launch_ang[0],&launch_ang[1],&launch_ang[2],&launch_ang[3],&launch_ang[4]);
-        fflush(stdin);
-        printf("Enter 5 values of launch height: ");
-        scanf("%f %f %f %f %f",&launch_height[0],&launch_height[1],&launch_height[2],&launch_height[3],&launch_height[4]);
-        fflush(stdin);
-        drange_cal();
-        velocity_table();
-        angular_table();
-        height_table();
-
-        //Ask for another input again or terminate the program
+        
+         //Ask for another input again or terminate the program
         printf("Continue?(y/n) ");
         fflush(stdin);
         scanf("%c",&respond);
