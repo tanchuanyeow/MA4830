@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 char s[10];
 const char *order[5] = {"first","Second","Third","Fourth","Fifth"};
@@ -266,10 +267,11 @@ int main()
         init();
         printf("Select the variable you want to vary:(v for velocity, a for angle, h for height): ");
         scanf("%c",&userchoice);
+        userchoice = tolower(userchoice);
         fflush(stdin);
-        while(userchoice!='v'&&userchoice!='a'&&userchoice!='h') //make sure user only key in the correct information
+        while(userchoice!='v' && userchoice!='a'&& userchoice!='h') //make sure user only key in the correct information
         {
-            printf("Please key the correct choice ");
+            printf("Please key the correct choice\n");
             scanf("%c",&userchoice);
             fflush(stdin);
         }
@@ -286,10 +288,11 @@ int main()
          //Ask for another input again or terminate the program
         printf("Continue?(y/n) ");
         scanf("%c",&respond);
+        respond = tolower(respond);
         fflush(stdin);
         if(respond=='n')
         break;
-        while(respond!='y'&&respond!='n')
+        while(respond!='y' && respond!='n')
         {
             printf("Please press the correct key (y/n) ");
             scanf("%c",&respond);
