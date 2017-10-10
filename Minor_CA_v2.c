@@ -9,6 +9,7 @@ float varying[5];
 char varychoice, respond;
 float distance[5];
 float g = 9.81;
+int iteration;
 
 float conversion(char input[]) { //check for the validity of value input.
     int i;
@@ -27,7 +28,7 @@ float conversion(char input[]) { //check for the validity of value input.
                 return atof(input);
             }
             else {
-                printf("Error! The input contains non-digit character(s).\n");
+                printf("Invalid input! It contains non-digit character(s). Please input again.\n\n");
                 return -1.0;
             }
         }
@@ -36,55 +37,99 @@ float conversion(char input[]) { //check for the validity of value input.
     return atof(input);
 }
 
-void singleInput(char info1[], char info2[], char background1, char background2) {
+int checkLimit (char variable) {
+    switch (variable) {
+        case 'a':
+            if(angle >= 0.0 && angle <90.0) {
+                return 1;
+            }
+            else {
+                printf("Angle should be within 0 to 90 degree. Please input again.\n\n");
+                return 0;
+            }
+            break;
+        case 'v':
+            if (velocity > 0.0 && velocity <= 100) {
+                return 1;
+            }
+            else {
+                printf("Velocity should not be negative or too large. Please input again.\n\n");
+                return 0;
+            }
+            break;
+        case 'h':
+            if (height >= 0) {
+                return 1;
+            }
+            else {
+                printf("Height should not be negative. Please input again.\n\n");
+                return 0;
+            }
+    }
+}
+
+void singleInput(char* info1, char* info2, char background1, char background2) {
     int i;
-    char *s[10];
-    char *info[] = {info1, info2};
+    char s[30];
+    char* info[] = {info1, info2};
     char background[] = {background1, background2};
 
     for(i=0; i<2; i++) {
-        printf("Input %s: ", info[i]);
         do {
+            printf("Input %s: ", info[i]);
             fflush(stdin);
             scanf("%s", &s);
-            printf("%s\n", s);
         } while (conversion(s) == -1.0);
 
         switch (background[i]) {
             case 'a' :
                 angle = conversion(s);
+                if (!checkLimit('a')) {
+                    i -= 1;
+                    continue;
+                }
                 break;
             case 'h':
                 height = conversion(s);
+                if (!checkLimit('h')) {
+                    i -= 1;
+                    continue;
+                }
                 break;
             case 'v':
                 velocity = conversion(s);
+                if (!checkLimit('v')) {
+                    i -= 1;
+                    continue;
+                }
                 break;
         }
     }
 }
 
-void multiInput (char info[], char background) {
-    int i, iteration;
-    char *s[10];
+void multiInput (char* info, char background) {
+    int i;
+    char s[30];
 
-    printf("How many value you want to key in for %s? (max 5 values): ", info);
+    printf("Varying parameter %s by inputting different values\n", info);
+    printf("How many values you have? (Up to 5 values) ");
     scanf("%d", &iteration);
-    while(iteration > 5) {
-        printf("Please key the suitable value\n");
+    while(iteration <0 && iteration > 5) {
+        printf("Should not more than 5 values. Please input again.\n\n");
+        printf("How many values you have? ");
         scanf("%d",&iteration);
     }
     for(i=0; i<iteration; i++) {
         do {
             fflush(stdin);
-            printf("value %d: ", i);
+            printf("value %d: ", i+1);
             scanf("%s", &s);
         } while (conversion(s) == -1.0);
         varying[i] = conversion(s);
     }
 }
 
-float calculation (float v,float a,float h) {// v is input of mag of vel, a is input of angle, h is input of height
+float calculation (float v,float a,float h) { // v is input of mag of vel, a is input of angle, h is input of height
     float z,d;
     a = a * 3.141592654 / 180; //to convert degree into radian
     z = 1 + sqrt(1 + 2 * g * h / ( v * v * sin(a) * sin(a))); //z is to calculation the equation within the bracket first
@@ -93,27 +138,28 @@ float calculation (float v,float a,float h) {// v is input of mag of vel, a is i
 }
 
 void drange_cal() { //calculate the distance base on range of value of velocity and printed out in table form
-    int count;
+    int i;
     printf("\nRange of distance from range of velocity\n");
     printf("velocity  angle     height    distance\n");
-    for(count=0; count<5; count++) {
+    for(i=0; i<iteration; i++) {
         if(varychoice=='0') {
-            distance[count]=calculation(varying[count], angle, height);
-            printf("%-10.2f%-10.2f%-10.2f%-10.2f\n", varying[count], angle, height, distance[count]);
+            distance[i]=calculation(varying[i], angle, height);
+            printf("%-10.2f %-10.2f %-10.2f %-10.2f\n", varying[i], angle, height, distance[i]);
         }
         else if(varychoice=='1') {
-            distance[count]=calculation(velocity, varying[count], height);
-            printf("%-10.2f%-10.2f%-10.2f%-10.2f\n", velocity, varying[count], height, distance[count]);
+            distance[i]=calculation(velocity, varying[i], height);
+            printf("%-10.2f %-10.2f %-10.2f %-10.2f\n", velocity, varying[i], height, distance[i]);
         }
         else {
-            distance[count]=calculation(velocity, angle, varying[count]);
-            printf("%-10.2f%-10.2f%-10.2f%-10.2f\n", velocity, angle, varying[count], distance[count]);
+            distance[i]=calculation(velocity, angle, varying[i]);
+            printf("%-10.2f %-10.2f %-10.2f %-10.2f\n", velocity, angle, varying[i], distance[i]);
         }
     }
 }
 
 int main(void) {
-    char *s[10];
+    char s[30];
+    printf("INSTRUCTION HERE\n");
     while (1) {
         do {
             fflush(stdin);
@@ -124,24 +170,21 @@ int main(void) {
 
         switch (varychoice) {
             case '0':
-                singleInput("angle in degree, a","height, h", 'h', 'a');
+                singleInput("angle, a (degree)","height, h (m)", 'a', 'h');
                 multiInput("velocity, v", 'v');
                 break;
             case '1':
-                singleInput("velocity, v", "height, h", 'v', 'h');
+                singleInput("velocity, v (m/s)", "height, h (m)", 'v', 'h');
                 multiInput("angle in degree, a", 'a');
                 break;
             case '2':
-                singleInput("velocity, v", "angle in degree, a", 'v', 'a');
+                singleInput("velocity, v (m/s)", "angle, a (degree)", 'v', 'a');
                 multiInput("height, h", 'h');
                 break;
         }
 
-        //printf("velocity, %f\nheight, %f\nangle, %f\n", velocity, height, angle);
-
         drange_cal();
 
-        //Ask for another input again or terminate the program
         do {
             fflush(stdin);
             printf("Continue?(Y/n) ");
@@ -149,7 +192,7 @@ int main(void) {
             respond = tolower(respond);
             if (respond == 'n') return 0;
         } while(respond!='y');
-
+        printf("\n");
     }
     return 0;
 }
