@@ -5,14 +5,14 @@
 #include <math.h>
 
 float angle, height, velocity;
-float vary_temp;
+float varyTemp;
 float varying[5];
-char varychoice, respond;
+char varyChoice, respond;
 float distance[5];
 float g = 9.81;
 int iteration;
 
-float conversion(char input[]) { //check for the validity of value input
+float toFloat(char input[]) { //check for the validity of value input
     int i;
 
     for (i=0; i < strlen(input); i++) {
@@ -116,25 +116,25 @@ void singleInput(char* info1, char* info2, char background1, char background2) {
             printf("Input %s: ", info[i]);
             fflush(stdin);
             scanf("%s", &s);
-        } while (conversion(s) == -1.0);
+        } while (toFloat(s) == -1.0);
 
         switch (background[i]) {
             case 'a' :
-                angle = conversion(s);
+                angle = toFloat(s);
                 if (!checkLimit('a', angle)) {
                     i -= 1;
                     continue;
                 }
                 break;
             case 'h':
-                height = conversion(s);
+                height = toFloat(s);
                 if (!checkLimit('h', height)) {
                     i -= 1;
                     continue;
                 }
                 break;
             case 'v':
-                velocity = conversion(s);
+                velocity = toFloat(s);
                 if (!checkLimit('v', velocity)) {
                     i -= 1;
                     continue;
@@ -164,14 +164,14 @@ void multiInput (char* info, char background) { //for manipulated variable
             fflush(stdin);
             printf("value %d: ", i+1);
             scanf("%s", &s);
-        } while (conversion(s) == -1.0);
-        vary_temp = conversion(s);
-        if (!checkLimit(background, vary_temp)) {
+        } while (toFloat(s) == -1.0);
+        varyTemp = toFloat(s);
+        if (!checkLimit(background, varyTemp)) {
             i -= 1;
             continue;
         }
         else {
-            varying[i] = vary_temp;
+            varying[i] = varyTemp;
         }
     }
 }
@@ -189,11 +189,11 @@ void drange_cal() { //calculate the distance base on range of value of velocity 
     printf("\nRange of distance from range of velocity\n");
     printf("velocity    angle       height      distance\n");
     for(i=0; i<iteration; i++) {
-        if(varychoice=='0') {
+        if(varyChoice=='0') {
             distance[i]=calculation(varying[i], angle, height);
             printf("%-11.2f %-11.2f %-11.2f %-11.2f\n", varying[i], angle, height, distance[i]);
         }
-        else if(varychoice=='1') {
+        else if(varyChoice=='1') {
             distance[i]=calculation(velocity, varying[i], height);
             printf("%-11.2f %-11.2f %-11.2f %-11.2f\n", velocity, varying[i], height, distance[i]);
         }
@@ -230,11 +230,11 @@ int main(void) {
         do {
             fflush(stdin);
             printf("Select a parameter you want to vary\n(0 for velocity, 1 for projectile angle, 2 for height): ");
-            scanf("%c", &varychoice);
+            scanf("%c", &varyChoice);
             fflush(stdin);
-        } while(varychoice!='0' && varychoice!='1'&& varychoice!='2'); // make sure user only key in the correct information
+        } while(varyChoice!='0' && varyChoice!='1'&& varyChoice!='2'); // make sure user only key in the correct information
 
-        switch (varychoice) {
+        switch (varyChoice) {
             case '0':
                 singleInput("angle, a (degree)","height, h (m)", 'a', 'h');
                 multiInput("velocity, v", 'v');
