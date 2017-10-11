@@ -12,7 +12,7 @@ float distance[5];
 float g = 9.81;
 int iteration;
 
-float conversion(char input[]) { //check for the validity of value input.
+float conversion(char input[]) { //check for the validity of value input
     int i;
 
     for (i=0; i < strlen(input); i++) {
@@ -105,7 +105,7 @@ int checkLimit (char variable, float check) {
     }
 }
 
-void singleInput(char* info1, char* info2, char background1, char background2) {
+void singleInput(char* info1, char* info2, char background1, char background2) { // for fixed variable
     int i;
     char s[30];
     char* info[] = {info1, info2};
@@ -144,7 +144,7 @@ void singleInput(char* info1, char* info2, char background1, char background2) {
     }
 }
 
-void multiInput (char* info, char background) {
+void multiInput (char* info, char background) { //for manipulated variable
     int i;
     char s[30];
 
@@ -179,12 +179,12 @@ void multiInput (char* info, char background) {
 float calculation (float v, float a, float h) { // v is input of mag of vel, a is input of angle, h is input of height
     float z, d;
     a = a * 3.141592654 / 180; //to convert degree into radian
-    z = 1 + sqrt(1 + 2 * g * h / ( v * v * sin(a) * sin(a))); //z is to calculation the equation within the bracket first
+    z = 1 + sqrt(1 + 2 * g * h / ( v * v * sin(a) * sin(a))); //z is to calculate the equation within the bracket first
     d = v * v / (2*g) * z * sin(2*a);
     return d;
 }
 
-void drange_cal() { //calculate the distance base on range of value of velocity and printed out in table form
+void drange_cal() { //calculate the distance base on range of value of velocity and print them out in table form
     int i;
     printf("\nRange of distance from range of velocity\n");
     printf("velocity    angle       height      distance\n");
