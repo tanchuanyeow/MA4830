@@ -38,7 +38,7 @@ float toFloat(char input[]) { //check for the validity of value input
     return atof(input);
 }
 
-int toInt(char input[]) { //check for the validity of value input.
+int toInt(char input[]) { //check for the validity of value input and make sure user key in integer value
     int i;
 
     for (i=0; i < strlen(input); i++) {
@@ -63,7 +63,7 @@ int toInt(char input[]) { //check for the validity of value input.
     return atoi(input);
 }
 
-int checkLimit (char variable, float check) {
+int checkLimit (char variable, float check) { //make sure user key in values of variable within correct range
     switch (variable) {
         case 'a':
             if(check >= 0.0 && check <90.0) {
@@ -105,13 +105,13 @@ int checkLimit (char variable, float check) {
     }
 }
 
-void singleInput(char* info1, char* info2, char background1, char background2) { // for fixed variable
+void singleInput(char* info1, char* info2, char background1, char background2) { // for fixed variables
     int i;
     char s[30];
     char* info[] = {info1, info2};
     char background[] = {background1, background2};
 
-    for(i=0; i<2; i++) {
+    for(i=0; i<2; i++) { //let user to input value of fixed variables one by one
         do {
             printf("Input %s: ", info[i]);
             fflush(stdin);
@@ -150,7 +150,7 @@ void multiInput (char* info, char background) { //for manipulated variable
 
     printf("\nVarying parameter, %s\n", info);
 
-    do {
+    do { // let user to key in number of variable user have
         do {
             printf("How many values do you have? (Up to 5 values) ");
             fflush(stdin);
@@ -159,7 +159,7 @@ void multiInput (char* info, char background) { //for manipulated variable
         iteration = toInt(s);
     } while(!checkLimit('i', iteration));
 
-    for(i=0; i<iteration; i++) {
+    for(i=0; i<iteration; i++) { // let user to key in values of variable sequentially
         do {
             fflush(stdin);
             printf("value %d: ", i+1);
