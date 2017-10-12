@@ -12,6 +12,20 @@ float distance[5];
 float g = 9.81;
 int iteration;
 
+void init() {//to initialize all the array and other variable as 0 after every calculation.
+    int i;
+    for(i=0; i<5; i++) {
+        varying[i] = 0;
+        distance[i] = 0;
+    }
+    angle = 0;
+    height = 0;
+    velocity = 0;
+    varyTemp = 0;
+    varyChoice = '!';  // not to be the same with the intended input
+    respond = '!';  // not to be the same with the intended input
+}
+
 float toFloat(char input[]) { //check for the validity of value input
     int i;
 
@@ -63,10 +77,20 @@ int toInt(char input[]) { //check for the validity of value input and make sure 
     return atoi(input);
 }
 
-int checkLimit (char variable, float check) { //make sure user key in values of variable within correct range
+char oneCharInput (char* input) {
+    if (strlen(input) == 1) {
+        return input[0];
+    }
+    else {
+        printf("Seems like you are inputting a bunch of characters. Please input only one character.\n\n");
+        return '!';
+    }
+}
+
+int checkLimit (char variable, float check) {
     switch (variable) {
         case 'a':
-            if(check >= 0.0 && check <90.0) {
+            if(check > 0.0 && check < 90.0) {
                 return 1;
             }
             else {
@@ -105,11 +129,25 @@ int checkLimit (char variable, float check) { //make sure user key in values of 
     }
 }
 
+int repeatingValue (float element) {
+    int i;
+
+    for (i=0; i<iteration; i++) {
+        if (element == varying[i]) {
+            printf("You have keyed this value before. Please input different value to obtain better observation.\n\n");
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void singleInput(char* info1, char* info2, char background1, char background2) { // for fixed variables
     int i;
     char s[30];
     char* info[] = {info1, info2};
     char background[] = {background1, background2};
+
+    printf("Parameters %c and %c are maintained constant\n\n", background1, background2);
 
     for(i=0; i<2; i++) { //let user to input value of fixed variables one by one
         do {
@@ -150,7 +188,7 @@ void multiInput (char* info, char background) { //for manipulated variable
 
     printf("\nVarying parameter, %s\n", info);
 
-    do { // let user to key in number of variable user have
+    do {  // let user to key in number of variable user have
         do {
             printf("How many values do you have? (Up to 5 values) ");
             fflush(stdin);
@@ -166,7 +204,7 @@ void multiInput (char* info, char background) { //for manipulated variable
             scanf("%s", &s);
         } while (toFloat(s) == -1.0);
         varyTemp = toFloat(s);
-        if (!checkLimit(background, varyTemp)) {
+        if (!checkLimit(background, varyTemp) || repeatingValue(varyTemp)) {
             i -= 1;
             continue;
         }
@@ -184,10 +222,20 @@ float calculation (float v, float a, float h) { // v is input of mag of vel, a i
     return d;
 }
 
-void drange_cal() { //calculate the distance base on range of value of velocity and print them out in table form
+int compare (const void * a, const void * b) {
+    // for sorting array use
+    return ( *(int*)a - *(int*)b );
+}
+
+void rangeCalculation() { //calculate the distance base on range of value of velocity and print them out in table form
     int i;
-    printf("\nRange of distance from range of velocity\n");
+
+    qsort (varying, iteration, sizeof(float), compare);  // to sort the different values input by user
+
+    printf("\nTabulating in the table below...\n\n");
+    printf("-----------------------------------------------------\n");
     printf("velocity    angle       height      distance\n");
+    printf("-----------------------------------------------------\n");
     for(i=0; i<iteration; i++) {
         if(varyChoice=='0') {
             distance[i]=calculation(varying[i], angle, height);
@@ -227,12 +275,21 @@ int main(void) {
     printf("********************\n\n");
 
     while (1) {
-        do {
+        init();
+        while(1) {
             fflush(stdin);
             printf("Select a parameter you want to vary\n(0 for velocity, 1 for projectile angle, 2 for height): ");
-            scanf("%c", &varyChoice);
-            fflush(stdin);
-        } while(varyChoice!='0' && varyChoice!='1'&& varyChoice!='2'); // make sure user only key in the correct information
+            scanf("%s", s);
+            varyChoice = oneCharInput(s);  // make sure user only key in the correct information
+            if (varyChoice < '3' && varyChoice >= '0') {
+                break;
+            }
+            else {
+                printf("Please choose among 0, 1 and 2.\n\n");
+                continue;
+            }
+        }
+        printf("\n");
 
         switch (varyChoice) {
             case '0':
@@ -249,16 +306,25 @@ int main(void) {
                 break;
         }
 
-        drange_cal();
+        rangeCalculation();
+
+        printf("\nYay!! Good Job!!\n");
 
         do {
             fflush(stdin);
-            printf("\nContinue? (Y/n) ");
-            scanf("%c",&respond);
-            respond = tolower(respond);
-            if (respond == 'n') return 0;
-        } while(respond!='y');
-        printf("\n");
+            printf("Do you want to run the program again? (Y/n) ");
+            scanf("%s", s);
+            respond = tolower(oneCharInput(s));
+        } while(!(respond == 'y' || respond == 'n'));
+
+        if (respond == 'y') {
+            printf("\n");
+            continue;
+        }
+        if (respond == 'n') {
+            break;
+        }
     }
+    printf("Program terminated. Thank you.\n\n");
     return 0;
 }
