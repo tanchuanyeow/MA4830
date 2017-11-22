@@ -82,6 +82,9 @@ float toFloat(char input[]) {
     // convert to float
     int i;
 
+    if (input[(strlen(input)-1)] == '\n') input[(strlen(input)-1)] = NULL;
+ +    printf("input is %s\n", input);
+
     for (i=0; i < strlen(input); i++) {
         if (input[i] >= '0' && input[i] <= '9') {
             // check if it can be converted to a digit
@@ -496,8 +499,8 @@ void *board_input(void* arg)
     int previousPot1 = -1;
     int previousPot2 = -1;
     //Limits & Increments
-    const float freqMax = 200;
-    const float freqMin = 50;
+    const float freqMax = 100;
+    const float freqMin = 0;
     const float ampMax = 5.0;
     const float ampMin = 0.0;
     const float meanMax = 5.0;
@@ -643,22 +646,22 @@ void *board_input(void* arg)
             //Error Checking for frequency,amplitude and mean switches
             if((freqSwitch && ampSwitch) || (freqSwitch && meanSwitch) || (ampSwitch && meanSwitch) || (freqSwitch && ampSwitch && meanSwitch))
             {
-                error = 1;
-                //printf("[Error:BOARDINPUT] Too many switches turned on. Attemping to get mutex\n");
+                previousSwitch = digitalSwitch;
+                //printf("[Error:BOARD INPUT] Too many switches turned on. Attemping to get mutex\n");
                 pthread_mutex_lock(&mutex);
                 while(condition == 1)
                 {
                     pthread_cond_wait(&cond,&mutex);
                 }
                 condition = 1;
-                errorGlobal = error;
+                errorGlobal = 1;
                 pthread_cond_broadcast( &cond );
                 pthread_mutex_unlock( &mutex );
 
             }
             else //Calculate the value of the parameter to be changed
             {
-            	printf("[BOARD_INPUT]Updating global parameters. Attemping to get mutex\n");
+            	//printf("[BOARD_INPUT]Updating global parameters. Attemping to get mutex\n");
                 if(potentiometerSelection == 0)
                 {
                     if(freqSwitch == 1)
@@ -735,7 +738,7 @@ void *board_input(void* arg)
             }
 
         }
-        delay(5000);
+        delay(500);
     }
 }
 
@@ -776,10 +779,10 @@ void *wave_generator() {
         if(j>200) j = 0;
 
 
-        out16(DA_CTLREG,0x0a23);            // DA Enable, #0, #1, SW 5V unipolar        
+        out16(DA_CTLREG,0x0a23);            // DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);                   // Clear DA FIFO  buffer
         out16(DA_Data,(short) database[0].point_value[(int)i]);
-        out16(DA_CTLREG,0x0a43);            // DA Enable, #0, #1, SW 5V unipolar      
+        out16(DA_CTLREG,0x0a43);            // DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);                   // Clear DA FIFO  buffer
         out16(DA_Data,(short) database[1].point_value[(int)j]);
 
@@ -822,7 +825,7 @@ void initialize() {
         exit(1);
     }
 }
-/*
+
 void signal_handler()
 {
     int i;
@@ -830,25 +833,26 @@ void signal_handler()
 
 
     printf("\nSignal raised by user\n");
-    for(i = 5; i>-1; i--)
-    {
-        printf("Program exiting in: %d\n", i);
-        sleep(1);
+
+    if (t==0) {
+        printf("Program is exiting.\n");
+        pthread_exit(NULL);
     }
-
-
-    while (t > -1) {
-
-        printf("Terminating threads %d\n", t);
-        pthread_cancel(thread[t--]);
-       if(t==0) printf("\n");
-
+    else{
+        for(i = 5; i>-1; i--)
+        {
+            printf("Program exiting in: %d\n", i);
+            sleep(1);
+        }
+        while (t > -1) {
+            printf("Terminating threads %d\n", t);
+            pthread_cancel(thread[t--]);
+            if(t==0) printf("\n");
+        }
     }
-
-    //printf("\fProgram exiting in: %d\n\f", i);
-	//exit(0);
+	exit(0);
 }
-*/
+
 int main(int argc, char *argv[]) {
 
 
@@ -861,7 +865,7 @@ int main(int argc, char *argv[]) {
     resolution = 200;
     delta = 2.0 * 3.1416 / (float)resolution;
 
-    //signal(SIGINT, signal_handler);
+    signal(SIGINT, signal_handler);
 
     // initialize PCI board
     initialize();
