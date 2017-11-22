@@ -70,6 +70,7 @@ wave *hello;        // array of wave struct
 dac_data *database; // array of dac_data struct
 char s[60];         // scanf buffer
 char result[30];    // config command extract
+char *name_type[] = {"SINE WAVE", "TRIANGULAR WAVE", "SQUARE WAVE"};
 
 // set up condition variable
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -94,7 +95,7 @@ float toFloat(char input[]) {
                 printf("Invalid input! It contains non-digit character(s). Please input again.\n\n");
                 return (-9999.0);
             }
-        
+
     }
     // it is likely input as integer, but we cast it to float
     return atof(input);
@@ -180,7 +181,7 @@ delay(5000);
 
 void wave_input_param(int wave_type) {
     // capture selected wave parameters
-    	do{
+    do{
 	printf("Enter amplitude: ");
 	fgets(s, 30, stdin);
 	}while(toFloat(s) == -9999.0);
@@ -207,19 +208,19 @@ void wave_select(int dac, char wave_type) {
 	int wave;
 
 	switch(wave_type) {
-		case 's':  printf("Sine wave is selected\n");
+		case 's':  printf("SINE WAVE is selected\n");
 				   wave = 0;
 				   wave_input_param(0);
 				   break;
-		case 't':  printf("Triangular wave is selected\n");
+		case 't':  printf("TRIANGULAR WAVE is selected\n");
 				   wave = 1;
 				   wave_input_param(1);
 				   break;
-		case 'q':  printf("Square wave is selected\n");
+		case 'q':  printf("SQUARE WAVE is selected\n");
 				   wave = 2;
 				   wave_input_param(2);
 				   break;
-		default: printf("invalid option\n\n"); break;
+		default: printf("[Error!] Invalid Option\n\n"); break;
 	}
 
 	if (dac) {
@@ -253,7 +254,7 @@ void square_wave(wave value, int dac) {
             database[dac].point_value[i] = (unsigned)(dummysquare*0x3333); //scale to 5V
         }
         else {
-            dummysquare=value.mean + value.amplitude; //equation for upper square wave
+            dummysquare=value.mean + value.amplitude;  //equation for upper square wave
             if(dummysquare<0) dummysquare = 0;
             else if(dummysquare>5) dummysquare = 5;
             database[dac].point_value[i] = (unsigned)(dummysquare*0x3333); //scale to 5V
@@ -268,7 +269,7 @@ void tri_wave(wave value, int dac) {
         dummytri= ((value.amplitude*2*asinf((sinf((float)(i*delta))))/3.1416) + value.mean);  //equation for triangle wave
         if(dummytri > 5)        dummytri = 5;
         else if(dummytri < 0)   dummytri = 0;
-        database[dac].point_value[i]= (unsigned) (dummytri * 0x3333);  //scale to 5V
+        database[dac].point_value[i]= (unsigned) (dummytri * 0x3333); //scale to 5V
     }
 }
 
@@ -286,7 +287,7 @@ void cmd_line(int count, char *arg[]) {
 
 	while(--count && ((*p_to_arg)[0] == '-')) {
 		switch((*p_to_arg)[1]) {
-			case 'a':   printf("dac0 is selected\n");
+			case 'a':   printf("DAC (0) is selected\n");
             			p_to_arg++;
             			printf("%s\n", (*p_to_arg));
             			wave_select(dac0, *p_to_arg[0]);
@@ -294,7 +295,7 @@ void cmd_line(int count, char *arg[]) {
             			--count;
             			p_to_arg++;
             			break;
-			case 'b':   printf("dac1 is selected\n");
+			case 'b':   printf("DAC (1) is selected\n");
             			p_to_arg++;
             			printf("%s\n", (*p_to_arg));
             			wave_select(dac1, *p_to_arg[0]);
@@ -309,7 +310,7 @@ void cmd_line(int count, char *arg[]) {
             			--count;
             			p_to_arg++;
             			break;
-			default:    printf("invalid option\n\n"); break;
+			default:    printf("[Error!] Invalid Option\n\n"); break;
 		}
 	}
 }
@@ -367,7 +368,6 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
                             //printf("it is mean of %f\n", toFloat(result));
                             printf("filename is %s\n", result);
                             write_data_file(result);
-
                             break;
                 default:    printf("No matches\n");
                             break;
@@ -383,27 +383,34 @@ void *output_config() {
         pthread_mutex_lock(&mutex);
         while(condition == 0) pthread_cond_wait(&cond, &mutex);
 
-        printf("\f********************\n");
-        printf("Wave Form Generator\n");
-        printf("********************\n");
+        printf("\f*************************************************************************************************************\n");
+        printf("                                             WAVE FORM GENERATOR\n\n");
+        printf("*************************************************************************************************************\n");
         printf("\n\ndac0\n");
-        printf("----------------------------\n");
+        pprintf("-------------------------------------------------------------------------------------------------------------\n");
+        printf("Type (0): %s\n", name_type[dac0_wave]);
         printf("Amplitude (0): %lf\n", hello[dac0_wave].amplitude);
         printf("Mean Value (0): %lf\n", hello[dac0_wave].mean);
         printf("Frequency (0): %lf\n", hello[dac0_wave].frequency);
         printf("\n\ndac1\n");
-        printf("----------------------------\n");
+        printf("-------------------------------------------------------------------------------------------------------------\n");
+        printf("Type (1): %s\n",name_type[dac1_wave]);
         printf("Amplitude (1): %lf\n", hello[dac1_wave].amplitude);
         printf("Mean Value (1): %lf\n", hello[dac1_wave].mean);
         printf("Frequency (1): %lf\n", hello[dac1_wave].frequency);
         if(errorGlobal == 1){
-        	printf("**************************************\n\nError! Too many switches turned on!\nPlease only turn on 1 of the 3 switches: Frequency, Amplitude, Mean\n\n*************************************\n");
-        	errorGlobal = 0;
+        	printf("\n\n*************************************************************************************************************\n[Error!] Too many switches turned on!\n[Error!] Please only turn on 1 of the 3 switches: Frequency, Amplitude, Mean\n\n*************************************************************************************************************\n");
+            errorGlobal = 0;
         }
         else if(errorGlobal == 2){
-            	printf("**************************************\n\nError! Input contain non-digit character, please key in again.\n\n*************************************\n");
+            printf("\n\n*************************************************************************************************************\n[Error!] Input contain non-digit character, please key in again.\n\n*************************************************************************************************************\n");
         	errorGlobal = 0;
         }
+
+        printf("[*] To adjust the different parameters using keyboard input [*]\nPlease enter through command:\n dac0 for DAC (0) port\n dac1 for DAC (1) port\n -a follow by a space and a value to adjust the Amplitude\n -m follow by a space and a value to adjust the Mean Value\n -f follow by a space and a value to adjust the Frequency\nExample: dac0 -a 1.0 -m 1.0 -f 1.0\n");
+ +      printf("\n[*] To save parameters to a file [*]\nPlease enter through command:\n saveparam -n filename.txt\n");
+ +      printf("\n[*] To exit the program [*]\nPlease press Crtl + c\n\n");
+
         printf("Enter command: ");
 
         condition = 0;
@@ -754,7 +761,7 @@ void *wave_generator() {
                 perror("clock gettime");
                 exit(EXIT_FAILURE);
             }
-            accum = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / BILLION; //time interval for each loop
+            accum = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / BILLION;
             if(clock_gettime(CLOCK_REALTIME, &start) == -1) {
                 perror("clock gettime");
                 exit(EXIT_FAILURE);
@@ -762,8 +769,8 @@ void *wave_generator() {
             tick = 0;
         }
 
-        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000)); //offset for frequency of output wave for dac0
-        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000)); //offset for frequency of output wave for dac1
+        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000));                   // 10000/accum = resolution / time
+        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000));
 
         if(i>200) i = 0;
         if(j>200) j = 0;
