@@ -386,13 +386,13 @@ void *output_config() {
         printf("\f*************************************************************************************************************\n");
         printf("                                             WAVE FORM GENERATOR\n\n");
         printf("*************************************************************************************************************\n");
-        printf("\n\ndac0\n");
-        pprintf("-------------------------------------------------------------------------------------------------------------\n");
+        printf("\n\nDAC (0)\n");
+        printf("-------------------------------------------------------------------------------------------------------------\n");
         printf("Type (0): %s\n", name_type[dac0_wave]);
         printf("Amplitude (0): %lf\n", hello[dac0_wave].amplitude);
         printf("Mean Value (0): %lf\n", hello[dac0_wave].mean);
         printf("Frequency (0): %lf\n", hello[dac0_wave].frequency);
-        printf("\n\ndac1\n");
+        printf("\n\nDAC (1)\n");
         printf("-------------------------------------------------------------------------------------------------------------\n");
         printf("Type (1): %s\n",name_type[dac1_wave]);
         printf("Amplitude (1): %lf\n", hello[dac1_wave].amplitude);
@@ -407,7 +407,7 @@ void *output_config() {
         	errorGlobal = 0;
         }
 
-        printf("[*] To adjust the different parameters using keyboard input [*]\nPlease enter through command:\n dac0 for DAC (0) port\n dac1 for DAC (1) port\n -a follow by a space and a value to adjust the Amplitude\n -m follow by a space and a value to adjust the Mean Value\n -f follow by a space and a value to adjust the Frequency\nExample: dac0 -a 1.0 -m 1.0 -f 1.0\n");
+        printf("\n\n[*] To adjust the different parameters using keyboard input [*]\nPlease enter through command:\n dac0 for DAC (0) port\n dac1 for DAC (1) port\n -a follow by a space and a value to adjust the Amplitude\n -m follow by a space and a value to adjust the Mean Value\n -f follow by a space and a value to adjust the Frequency\nExample: dac0 -a 1.0 -m 1.0 -f 1.0\n");
  +      printf("\n[*] To save parameters to a file [*]\nPlease enter through command:\n saveparam -n filename.txt\n");
  +      printf("\n[*] To exit the program [*]\nPlease press Crtl + c\n\n");
 
@@ -761,7 +761,7 @@ void *wave_generator() {
                 perror("clock gettime");
                 exit(EXIT_FAILURE);
             }
-            accum = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / BILLION;
+            accum = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / BILLION; //time interval for each loop
             if(clock_gettime(CLOCK_REALTIME, &start) == -1) {
                 perror("clock gettime");
                 exit(EXIT_FAILURE);
@@ -769,17 +769,17 @@ void *wave_generator() {
             tick = 0;
         }
 
-        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000));                   // 10000/accum = resolution / time
-        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000));
+        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000));    //frequency offset for DAC0
+        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000));    //frequency offset for DAC1
 
         if(i>200) i = 0;
         if(j>200) j = 0;
 
 
-        out16(DA_CTLREG,0x0a23);            // DA Enable, #0, #1, SW 5V unipolar        2/6     channel to generate triangle wave
+        out16(DA_CTLREG,0x0a23);            // DA Enable, #0, #1, SW 5V unipolar        
         out16(DA_FIFOCLR, 0);                   // Clear DA FIFO  buffer
         out16(DA_Data,(short) database[0].point_value[(int)i]);
-        out16(DA_CTLREG,0x0a43);            // DA Enable, #0, #1, SW 5V unipolar        2/6     channel to generate triangle wave
+        out16(DA_CTLREG,0x0a43);            // DA Enable, #0, #1, SW 5V unipolar      
         out16(DA_FIFOCLR, 0);                   // Clear DA FIFO  buffer
         out16(DA_Data,(short) database[1].point_value[(int)j]);
 
