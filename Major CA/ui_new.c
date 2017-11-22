@@ -70,23 +70,28 @@ wave *hello;        // array of wave struct
 dac_data *database; // array of dac_data struct
 char s[60];         // scanf buffer
 char result[30];    // config command extract
-
+char *name_type[] = {"SINE WAVE", "TRIANGULAR WAVE", "SQUARE WAVE"};
+ 
 // set up condition variable
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 int condition = 1;
 
 
-float toFloat(char input[]) {
+float toFloat(char input[]) { 
     // convert to float
     int i;
-
+    
     for (i=0; i < strlen(input); i++) {
         if (input[i] >= '0' && input[i] <= '9') {
             // check if it can be converted to a digit
             continue;
         }
-        else if (input[i] == '.' || input[i] == 'e' || input[i] == 'E') {
+        else {
+            if (input[i] == '-' && i == 0) {
+                continue;
+            }
+            else if (input[i] == '.' || input[i] == 'e' || input[i] == 'E') {
                 // if they are one of the forms of floating point expressions
                 return atof(input);
             }
@@ -94,7 +99,7 @@ float toFloat(char input[]) {
                 printf("Invalid input! It contains non-digit character(s). Please input again.\n\n");
                 return (-9999.0);
             }
-        
+        }
     }
     // it is likely input as integer, but we cast it to float
     return atof(input);
@@ -106,7 +111,7 @@ void read_data_file(char filename[]) {
     //int length;
     int wave;
     int count = 0;
-
+    
     char type;
     float value;
     int terminate = 1;
@@ -129,18 +134,18 @@ void read_data_file(char filename[]) {
     case 'M': hello[wave].mean = value; printf("M is ok\n"); break;
     case 'F': hello[wave].frequency = value; printf("F is ok\n"); break;
     case 'Z': if(value == 0.0) {
-    printf("I have done reading\n");
+    printf("I have done reading\n"); 
         terminate=0;
-        }
+        } 
     else {
     printf("Z: Exit with error message\n");
     exit(1);
     }
     break;
     case 'W': printf("I know which wave type\n"); wave = value; break;
-    case 'E':
+    case 'E': 
      if(value == 0.0) {
-   printf("I have finished reading one wave\n");
+   printf("I have finished reading one wave\n"); 
    if(count = 0) dac0_wave = wave;
       if(count = 1) dac1_wave = wave;
       count++;
@@ -151,17 +156,17 @@ void read_data_file(char filename[]) {
     }
     break;
     }
-} while (terminate);
-
+} while (terminate);    
+    
 
 }
 
 void write_data_file(char filename[]) {
     FILE *fp;
     char str[200];
-
+    
     printf("I am going to write to file %s now\n", filename);
-
+    
     fp=fopen(filename,"w");
     if (fp==NULL)
     {
@@ -170,8 +175,8 @@ void write_data_file(char filename[]) {
     }
     printf("I am priting text to file now\n");
     fprintf(fp, "%d W\n%f A\n%f M\n%f F\n0.0 E\n", dac0_wave,hello[dac0_wave].amplitude,hello[dac0_wave].mean,hello[dac0_wave].frequency);
-
-
+    
+    
     fprintf(fp, "%d W\n%f A\n%f M\n%f F\n0.0 E\n", dac1_wave,hello[dac1_wave].amplitude,hello[dac1_wave].mean,hello[dac1_wave].frequency);
     fprintf(fp, "%f %c", 0.0, 'Z');
 delay(5000);
@@ -180,48 +185,48 @@ delay(5000);
 
 void wave_input_param(int wave_type) {
     // capture selected wave parameters
-    	do{
+    do{
 	printf("Enter amplitude: ");
-	fgets(s, 30, stdin);
+	fgets(s, 10, stdin);
 	}while(toFloat(s) == -9999.0);
 	hello[wave_type].amplitude = toFloat(s) ;
 	fflush(stdin);
 
 	do{
 	printf("Enter frequency: ");
-	fgets(s, 30, stdin);
+	fgets(s, 10, stdin);
 	}while(toFloat(s) == -9999.0);
 	hello[wave_type].frequency = toFloat(s);
 	fflush(stdin);
-
+	
 	do{
 	printf("Enter mean value: ");
-	fgets(s, 30, stdin);
+	fgets(s, 10, stdin);
 	}while(toFloat(s) == -9999.0);
-	hello[wave_type].mean = toFloat(s);
+	hello[wave_type].mean = toFloat(s);	
 	fflush(stdin);
 }
 
 void wave_select(int dac, char wave_type) {
     // wave identifier from command line argument
 	int wave;
-
+	
 	switch(wave_type) {
-		case 's':  printf("Sine wave is selected\n");
+		case 's':  printf("SINE WAVE is selected\n");
 				   wave = 0;
 				   wave_input_param(0);
 				   break;
-		case 't':  printf("Triangular wave is selected\n");
+		case 't':  printf("TRIANGULAR WAVE is selected\n");
 				   wave = 1;
 				   wave_input_param(1);
 				   break;
-		case 'q':  printf("Square wave is selected\n");
+		case 'q':  printf("SQUARE WAVE is selected\n");
 				   wave = 2;
 				   wave_input_param(2);
 				   break;
-		default: printf("invalid option\n\n"); break;
+		default: printf("[Error!] Invalid Option\n\n"); break;
 	}
-
+	
 	if (dac) {
 	  dac1_wave = wave;
 	}
@@ -237,7 +242,7 @@ void sine_wave(wave value, int dac) {
         dummysine= ((value.amplitude * sinf((float)(i*delta))) + value.mean); //equation for sine wave
         if(dummysine > 5)        dummysine = 5;
         else if(dummysine < 0)   dummysine = 0;
-        database[dac].point_value[i]= (unsigned) (dummysine * 0x3333);   // scale to 5V
+        database[dac].point_value[i]= (unsigned) (dummysine * 0x3333);   // add offset +  scale
     }
 }
 
@@ -247,16 +252,16 @@ void square_wave(wave value, int dac) {
     //square wave//
     for(i=0; i<resolution; i++) {
         if(i < resolution/2) {
-            dummysquare = value.mean - value.amplitude; //equation for lower square wave
+            dummysquare = value.mean - value.amplitude;
             if(dummysquare<0) dummysquare = 0;
             else if(dummysquare>5)dummysquare = 5;
-            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333); //scale to 5V
+            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333);
         }
         else {
-            dummysquare=value.mean + value.amplitude; //equation for upper square wave
+            dummysquare=value.mean + value.amplitude;   //amplitude can be change
             if(dummysquare<0) dummysquare = 0;
             else if(dummysquare>5) dummysquare = 5;
-            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333); //scale to 5V
+            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333);
         }
     }
 }
@@ -268,7 +273,7 @@ void tri_wave(wave value, int dac) {
         dummytri= ((value.amplitude*2*asinf((sinf((float)(i*delta))))/3.1416) + value.mean);  //equation for triangle wave
         if(dummytri > 5)        dummytri = 5;
         else if(dummytri < 0)   dummytri = 0;
-        database[dac].point_value[i]= (unsigned) (dummytri * 0x3333);  //scale to 5V
+        database[dac].point_value[i]= (unsigned) (dummytri * 0x3333);   // add offset +  scale
     }
 }
 
@@ -283,10 +288,10 @@ void data_point_calculation(int wave, int dac) {
 }
 void cmd_line(int count, char *arg[]) {
 	char **p_to_arg = &arg[1];
-
+	
 	while(--count && ((*p_to_arg)[0] == '-')) {
 		switch((*p_to_arg)[1]) {
-			case 'a':   printf("dac0 is selected\n");
+			case 'a':   printf("DAC (0) is selected\n");
             			p_to_arg++;
             			printf("%s\n", (*p_to_arg));
             			wave_select(dac0, *p_to_arg[0]);
@@ -294,7 +299,7 @@ void cmd_line(int count, char *arg[]) {
             			--count;
             			p_to_arg++;
             			break;
-			case 'b':   printf("dac1 is selected\n");
+			case 'b':   printf("DAC (1) is selected\n");
             			p_to_arg++;
             			printf("%s\n", (*p_to_arg));
             			wave_select(dac1, *p_to_arg[0]);
@@ -309,7 +314,7 @@ void cmd_line(int count, char *arg[]) {
             			--count;
             			p_to_arg++;
             			break;
-			default:    printf("invalid option\n\n"); break;
+			default:    printf("[Error!] Invalid Option\n\n"); break;
 		}
 	}
 }
@@ -337,39 +342,24 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
             i++;
             switch(result[1]) {
                 case('a'):  return_string(command, indexing[2*i], indexing[2*i+1]);
-                            //printf("it is amplitude of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0){
-                                errorGlobal = 2;
-                                break;
-                            }
-                            else
-                                hello[dac_wave].amplitude = toFloat(result);
+                            //printf("it is amplitude of %f\n", toFloat(result)); 
+                            hello[dac_wave].amplitude = toFloat(result);
                             break;
                 case('f'):  return_string(command, indexing[2*i], indexing[2*i+1]);
-                            //printf("it is frequency of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0){
-                                errorGlobal = 2;
-                                break;
-                            }
-                            else
-                                hello[dac_wave].frequency = toFloat(result);
+                            //printf("it is frequency of %f\n", toFloat(result)); 
+                            hello[dac_wave].frequency = toFloat(result);
                             break;
                 case('m'):  return_string(command, indexing[2*i], indexing[2*i+1]);
-                            //printf("it is mean of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0){
-                                errorGlobal = 2;
-                                break;
-                            }
-                            else
-                                hello[dac_wave].mean = toFloat(result);
+                            //printf("it is mean of %f\n", toFloat(result)); 
+                            hello[dac_wave].mean = toFloat(result);
                             break;
                 case('n'):  return_string(command, indexing[2*i], indexing[2*i+1]);
-                            //printf("it is mean of %f\n", toFloat(result));
+                            //printf("it is mean of %f\n", toFloat(result)); 
                             printf("filename is %s\n", result);
                             write_data_file(result);
 
-                            break;
-                default:    printf("No matches\n");
+                            break;  
+                default:    printf("No matches\n"); 
                             break;
             }
         }
@@ -383,29 +373,31 @@ void *output_config() {
         pthread_mutex_lock(&mutex);
         while(condition == 0) pthread_cond_wait(&cond, &mutex);
 
-        printf("\f********************\n");
-        printf("Wave Form Generator\n");
-        printf("********************\n");
-        printf("\n\ndac0\n");
-        printf("----------------------------\n");
+        printf("\f*************************************************************************************************************\n");
+        printf("                                             WAVE FORM GENERATOR\n\n");
+        printf("*************************************************************************************************************\n");
+        printf("\n\nDAC (0)\n");
+        printf("-------------------------------------------------------------------------------------------------------------\n");
+        printf("Type (0): %s\n", name_type[dac0_wave]);
         printf("Amplitude (0): %lf\n", hello[dac0_wave].amplitude);
         printf("Mean Value (0): %lf\n", hello[dac0_wave].mean);
         printf("Frequency (0): %lf\n", hello[dac0_wave].frequency);
-        printf("\n\ndac1\n");
-        printf("----------------------------\n");
+        printf("\n\nDAC (1)\n");
+        printf("-------------------------------------------------------------------------------------------------------------\n");
+        printf("Type (1): %s\n",name_type[dac1_wave]);
         printf("Amplitude (1): %lf\n", hello[dac1_wave].amplitude);
         printf("Mean Value (1): %lf\n", hello[dac1_wave].mean);
-        printf("Frequency (1): %lf\n", hello[dac1_wave].frequency);
-        if(errorGlobal == 1){
-        	printf("**************************************\n\nError! Too many switches turned on!\nPlease only turn on 1 of the 3 switches: Frequency, Amplitude, Mean\n\n*************************************\n");
-        	errorGlobal = 0;
+        printf("Frequency (1): %lf\n", hello[dac1_wave].frequency); 
+        if(errorGlobal == 1)
+        {
+        	printf("\n\n*************************************************************************************************************\n[Error!] Too many switches turned on!\n[Error!] Please only turn on 1 of the 3 switches: Frequency, Amplitude, Mean\n\n*************************************************************************************************************\n");
+        	errorGlobal == 0;
         }
-        else if(errorGlobal == 2){
-            	printf("**************************************\n\nError! Input contain non-digit character, please key in again.\n\n*************************************\n");
-        	errorGlobal = 0;
-        }
+        printf("[*] To adjust the different parameters using keyboard input [*]\nPlease enter through command:\n dac0 for DAC (0) port\n dac1 for DAC (1) port\n -a follow by a space and a value to adjust the Amplitude\n -m follow by a space and a value to adjust the Mean Value\n -f follow by a space and a value to adjust the Frequency\nExample: dac0 -a 1.0 -m 1.0 -f 1.0\n");
+        printf("\n[*] To save parameters to a file [*]\nPlease enter through command:\n saveparam -n filename.txt\n");
+        printf("\n[*] To exit the program [*]\nPlease press Crtl + c\n\n");
         printf("Enter command: ");
-
+        
         condition = 0;
         pthread_cond_signal(&cond);
         pthread_mutex_unlock(&mutex);
@@ -430,7 +422,7 @@ void *input_server() {
     int index[20];
     while(1) {
         // capture config command
-
+        
         //printf("Enter command: ");
         fflush(stdin);
         fgets(s, 30, stdin);
@@ -450,7 +442,7 @@ void *input_server() {
         }
 
         i = 0;
-
+        
         pthread_mutex_lock(&mutex);
         while(condition == 1) pthread_cond_wait(&cond, &mutex);
 
@@ -490,8 +482,8 @@ void *board_input(void* arg)
     int previousPot2 = -1;
     //Limits & Increments
     const float freqMax = 200;
-    const float freqMin = 50;
-    const float ampMax = 5.0;
+    const float freqMin = 50;    
+    const float ampMax = 5.0;    
     const float ampMin = 0.0;
     const float meanMax = 5.0;
     const float meanMin = 0.0;
@@ -505,13 +497,13 @@ void *board_input(void* arg)
     float amplitude;
     int potentiometerSelection;        //1 indicates that you want to change wave1, 2 indicates that you want to change wave2
     int freqSwitch;           //switch to turn on/off edit mode for frequency.0 = OFF,1 = ON
-    int meanSwitch;           //switch to turn on/off edit mode for mean value.0 = OFF,1 = ON
+    int meanSwitch;           //switch to turn on/off edit mode for mean value.0 = OFF,1 = ON     
     int ampSwitch;            //switch to turn on/off edit mode for amplitude.0 = OFF,1 = ON
     int pot1Scale;            //Scale of ADC0 reading
-    int pot2Scale;            //Scale of ADC1 reading
+    int pot2Scale;            //Scale of ADC1 reading  
     //int condition;        //To tell the display thread to update its display. 0 = Don't update,1 = Update
     int error;                //To tell the display thread what error message to display
-
+    
     unsigned int i, count;
     unsigned short chan;
 
@@ -521,48 +513,48 @@ void *board_input(void* arg)
         int updated = 0;
         //*****************************************************************************
         //Digital Port Functions
-        //*****************************************************************************
-        out8(DIO_CTLREG,0x90);                  // Port A : Input,  Port B : Output,  Port C (upper | lower) : Output | Output
+        //*****************************************************************************                                                                                                                                                                                                                        
+        out8(DIO_CTLREG,0x90);                  // Port A : Input,  Port B : Output,  Port C (upper | lower) : Output | Output          
 
-        digitalSwitch=in8(DIO_PORTA);           // Read Port A
+        digitalSwitch=in8(DIO_PORTA);           // Read Port A  
         //printf("[Streaming]Raw Digital Switch Port A : %02x\n", digitalSwitch);
-
+        
         //fflush(stdout);                       //Might need***************************
 
         //******************************************************************************
         // ADC Port Functions
         //******************************************************************************
-        // Initialise Board
-        out16(INTERRUPT,0x60c0);                // sets interrupts   - Clears
+        // Initialise Board                             
+        out16(INTERRUPT,0x60c0);                // sets interrupts   - Clears           
         out16(TRIGGER,0x2081);                   // sets trigger control: 10MHz, clear, Burst off,SW trig. default:20a0
         out16(AUTOCAL,0x007f);                   // sets automatic calibration : default
 
         out16(AD_FIFOCLR,0);                        // clear ADC buffer
-        out16(MUXCHAN,0x0D00);                // Write to MUX register - SW trigger, UP, SE, 5v, ch 0-0
+        out16(MUXCHAN,0x0D00);                // Write to MUX register - SW trigger, UP, SE, 5v, ch 0-0   
                                                                  // x x 0 0 | 1  0  0 1  | 0x 7   0 | Diff - 8 channels
                                                                  // SW trig |Diff-Uni 5v| scan 0-7| Single - 16 channels
         count=0x00;
-        while(count <0x02)
+        while(count <0x02) 
         {
             chan= ((count & 0x0f)<<4) | (0x0f & count);
             out16(MUXCHAN,0x0D00|chan);                  // Set channel   - burst mode off.
             delay(1);                                                     // allow mux to settle
-            out16(AD_DATA,0);                                      // start ADC
+            out16(AD_DATA,0);                                      // start ADC 
             while(!(in16(MUXCHAN) & 0x4000));
             if(count == 0x00)
             {
-                potentiometerReading1=in16(AD_DATA);
-                //printf("[Streaming]Raw Potentiometer 1 ---ADC Chan: %02x Data [%3d]: %4x \n", chan, (int)count, (unsigned int)potentiometerReading1);       // print ADC
+                potentiometerReading1=in16(AD_DATA);   
+                //printf("[Streaming]Raw Potentiometer 1 ---ADC Chan: %02x Data [%3d]: %4x \n", chan, (int)count, (unsigned int)potentiometerReading1);       // print ADC  
             }
             else
             {
-                potentiometerReading2=in16(AD_DATA);
+                potentiometerReading2=in16(AD_DATA); 
                 //printf("[Streaming]Raw Potentiometer 2 ---ADC Chan: %02x Data [%3d]: %4x \n", chan, (int)count, (unsigned int)potentiometerReading2);       // print ADC
             }
-            //printf("ADC Chan: %02x Data [%3d]: %4x \n", chan, (int)count, (unsigned int)adc_in);      // print ADC
+            //printf("ADC Chan: %02x Data [%3d]: %4x \n", chan, (int)count, (unsigned int)adc_in);      // print ADC                                                    
             fflush( stdout );
             count++;
-            delay(5);                               // Write to MUX register - SW trigger, UP, DE, 5v, ch 0-7
+            delay(5);                               // Write to MUX register - SW trigger, UP, DE, 5v, ch 0-7   
         }
 
 
@@ -616,19 +608,19 @@ void *board_input(void* arg)
                 }
             }
         }
-
-
-
+        
+        
+        
         if(updated)
-        {
+        {   
             //Extract the value for each bit of port A digital i/o switches
-
+            
             freqSwitch = (digitalSwitch & 0x04)>>2;
             ampSwitch = (digitalSwitch & 0x02)>>1;
             meanSwitch = digitalSwitch & 0x01;
+            
 
-
-            //Right shift the potentiometer reading
+            //Right shift the potentiometer reading 
             pot1Scale = potentiometerReading1 >> 9;  //Rightshift 8 bits
             pot2Scale = potentiometerReading2 >> 9;  //Rightshift 8 bits
 
@@ -647,8 +639,8 @@ void *board_input(void* arg)
                 errorGlobal = error;
                 pthread_cond_broadcast( &cond );
                 pthread_mutex_unlock( &mutex );
-
-            }
+                
+            }     
             else //Calculate the value of the parameter to be changed
             {
             	printf("[BOARD_INPUT]Updating global parameters. Attemping to get mutex\n");
@@ -725,11 +717,11 @@ void *board_input(void* arg)
                 pthread_cond_broadcast(&cond);
                 pthread_mutex_unlock(&mutex);
                 //printf("[BOARD_INPUT] mutex unlocked\n");
-            }
+            }         
 
         }
-        delay(5000);
-    }
+        delay(5000);       
+    }                                                                                                       
 }
 
 void *wave_generator() {
@@ -738,11 +730,11 @@ void *wave_generator() {
     int tick;
     double i, j;
     double accum;
-
+    
     i = 0;
     j = 0;
     tick = 0;
-
+    
     if(clock_gettime(CLOCK_REALTIME,&start) == -1) {
         perror("clock gettime");
         exit(EXIT_FAILURE);
@@ -754,7 +746,7 @@ void *wave_generator() {
                 perror("clock gettime");
                 exit(EXIT_FAILURE);
             }
-            accum = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / BILLION; //time interval for each loop
+            accum = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / BILLION;
             if(clock_gettime(CLOCK_REALTIME, &start) == -1) {
                 perror("clock gettime");
                 exit(EXIT_FAILURE);
@@ -762,9 +754,9 @@ void *wave_generator() {
             tick = 0;
         }
 
-        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000)); //offset for frequency of output wave for dac0
-        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000)); //offset for frequency of output wave for dac1
-
+        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000));                   // 10000/accum = resolution / time
+        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000));
+        
         if(i>200) i = 0;
         if(j>200) j = 0;
 
@@ -775,7 +767,7 @@ void *wave_generator() {
         out16(DA_CTLREG,0x0a43);            // DA Enable, #0, #1, SW 5V unipolar        2/6     channel to generate triangle wave
         out16(DA_FIFOCLR, 0);                   // Clear DA FIFO  buffer
         out16(DA_Data,(short) database[1].point_value[(int)j]);
-
+        
         tick += 1;
     }
 }
@@ -799,7 +791,7 @@ void initialize() {
         exit(EXIT_FAILURE);
     }
 
-    // Determine assigned BADRn IO addresses for PCI-DAS1602
+    // Determine assigned BADRn IO addresses for PCI-DAS1602            
 
     printf("\nDAS 1602 Base addresses:\n\n");
     for(i=0;i<5;i++) {
@@ -808,19 +800,19 @@ void initialize() {
 
     for(i=0;i<5;i++) {                                     // expect CpuBaseAddress to be the same as iobase for PC
         iobase[i]=mmap_device_io(0x0f,badr[i]);
-    }
+    }                                                 
 
     if(ThreadCtl(_NTO_TCTL_IO,0)==-1) {
         perror("Thread Control");
         exit(1);
-    }
+    } 
 }
 /*
 void signal_handler()
-{
+{   
     int i;
     int rc;
-
+    
 
     printf("\nSignal raised by user\n");
     for(i = 5; i>-1; i--)
@@ -828,38 +820,38 @@ void signal_handler()
         printf("Program exiting in: %d\n", i);
         sleep(1);
     }
-
+    
 
     while (t > -1) {
-
+    
         printf("Terminating threads %d\n", t);
-        pthread_cancel(thread[t--]);
+        pthread_cancel(thread[t--]);   
        if(t==0) printf("\n");
-
+ 
     }
 
-    //printf("\fProgram exiting in: %d\n\f", i);
+    //printf("\fProgram exiting in: %d\n\f", i);   
 	//exit(0);
 }
 */
 int main(int argc, char *argv[]) {
 
-
+          
     // configure thread settings
     int rc;
-
+         
     // initialize global variable
     dac0 = 0;
     dac1 = 1;
     resolution = 200;
     delta = 2.0 * 3.1416 / (float)resolution;
-
+    
     //signal(SIGINT, signal_handler);
 
     // initialize PCI board
     initialize();
     printf("Initialization complete.\n\n");
-
+    
     // array of 3 wave struct
 	if ((hello=(wave *)malloc(3 * sizeof(wave))) == NULL) {
 	    printf("Not enough memory\n");
@@ -896,7 +888,7 @@ int main(int argc, char *argv[]) {
         printf("ERROR; return code from pthread_create() is %d\n", rc);
         exit(-1);
     }
-
+    
     t++;
     rc = pthread_create(&thread[t], NULL, &board_input, NULL);
     if (rc) {
@@ -906,7 +898,7 @@ int main(int argc, char *argv[]) {
 
 
     pthread_exit(NULL);     // wait all threads complete before terminating main
-
-
+    
+    
    return EXIT_SUCCESS;
 }
