@@ -86,12 +86,7 @@ float toFloat(char input[]) {
             // check if it can be converted to a digit
             continue;
         }
-        else 
-            //if (input[i] == '-' && i == 0) {
-            //    continue;
-            //}
-            //else
-            if (input[i] == '.' || input[i] == 'e' || input[i] == 'E') {
+        else if (input[i] == '.' || input[i] == 'e' || input[i] == 'E') {
                 // if they are one of the forms of floating point expressions
                 return atof(input);
             }
@@ -185,23 +180,23 @@ delay(5000);
 
 void wave_input_param(int wave_type) {
     // capture selected wave parameters
-    do{
+    	do{
 	printf("Enter amplitude: ");
-	fgets(s, 10, stdin);
+	fgets(s, 30, stdin);
 	}while(toFloat(s) == -9999.0);
 	hello[wave_type].amplitude = toFloat(s) ;
 	fflush(stdin);
 
 	do{
 	printf("Enter frequency: ");
-	fgets(s, 10, stdin);
+	fgets(s, 30, stdin);
 	}while(toFloat(s) == -9999.0);
 	hello[wave_type].frequency = toFloat(s);
 	fflush(stdin);
 
 	do{
 	printf("Enter mean value: ");
-	fgets(s, 10, stdin);
+	fgets(s, 30, stdin);
 	}while(toFloat(s) == -9999.0);
 	hello[wave_type].mean = toFloat(s);
 	fflush(stdin);
@@ -343,21 +338,16 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
             switch(result[1]) {
                 case('a'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is amplitude of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0)
-                            {
+                            if(toFloat(result) == -9999.0){
                                 errorGlobal = 2;
                                 break;
                             }
                             else
-                            {
                                 hello[dac_wave].amplitude = toFloat(result);
-
-                            }
                             break;
                 case('f'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is frequency of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0)
-                            {
+                            if(toFloat(result) == -9999.0){
                                 errorGlobal = 2;
                                 break;
                             }
@@ -366,8 +356,7 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
                             break;
                 case('m'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is mean of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0)
-                            {
+                            if(toFloat(result) == -9999.0){
                                 errorGlobal = 2;
                                 break;
                             }
@@ -407,14 +396,12 @@ void *output_config() {
         printf("Amplitude (1): %lf\n", hello[dac1_wave].amplitude);
         printf("Mean Value (1): %lf\n", hello[dac1_wave].mean);
         printf("Frequency (1): %lf\n", hello[dac1_wave].frequency);
-        if(errorGlobal == 1)
-        {
+        if(errorGlobal == 1){
         	printf("**************************************\n\nError! Too many switches turned on!\nPlease only turn on 1 of the 3 switches: Frequency, Amplitude, Mean\n\n*************************************\n");
         	errorGlobal = 0;
         }
-        else if(errorGlobal == 2)
-        {
-            printf("**************************************\n\nError! Input contain non-digit character, please key in again.\n\n*************************************\n");
+        else if(errorGlobal == 2){
+            	printf("**************************************\n\nError! Input contain non-digit character, please key in again.\n\n*************************************\n");
         	errorGlobal = 0;
         }
         printf("Enter command: ");
