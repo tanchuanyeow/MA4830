@@ -66,7 +66,7 @@ typedef struct {
     short int point_value[200];
 } dac_data;
 
-wave *hello;        // array of wave struct
+wave *wave_parameter;        // array of wave struct
 dac_data *database; // array of dac_data struct
 char s[60];         // scanf buffer
 char result[30];    // config command extract
@@ -81,9 +81,10 @@ int condition = 1;
 float toFloat(char input[]) {
     // convert to float
     int i;
+    
+    if (strlen(input) == 1) return (-9999.0);
 
     if (input[(strlen(input)-1)] == '\n') input[(strlen(input)-1)] = NULL;
- +    printf("input is %s\n", input);
 
     for (i=0; i < strlen(input); i++) {
         if (input[i] >= '0' && input[i] <= '9') {
@@ -120,43 +121,43 @@ void read_data_file(char filename[]) {
     // We assume argv[1] is a filename to open
     fp = fopen( filename, "r" );
     /* fopen returns exit(1), the NULL pointer, on failure */
-    if ( fp == NULL )
-    {
+    if ( fp == NULL ) {
         printf( "Could not open file\n" );
         delay(2000);
         exit(1);
     }
     do {
-    fscanf(fp, "%f %c", &value, &type);
-    switch (type) {
-    case 'A': hello[wave].amplitude = value; printf("A is ok\n"); break;
-    case 'M': hello[wave].mean = value; printf("M is ok\n"); break;
-    case 'F': hello[wave].frequency = value; printf("F is ok\n"); break;
-    case 'Z': if(value == 0.0) {
-    printf("I have done reading\n");
-        terminate=0;
+        fscanf(fp, "%f %c", &value, &type);
+        switch (type) {
+        case 'A': wave_parameter[wave].amplitude = value; printf("A is ok\n"); break;
+        case 'M': wave_parameter[wave].mean = value; printf("M is ok\n"); break;
+        case 'F': wave_parameter[wave].frequency = value; printf("F is ok\n"); break;
+        case 'Z':   if(value == 0.0) {
+                        printf("I have done reading\n");
+                            terminate=0;
+                    }
+                    else {
+                        printf("Z: Exit with error message\n");
+                        exit(1);
+                    }
+                    break;
+        case 'W': printf("I know which wave type\n"); wave = value; break;
+        case 'E':   if(value == 0.0) {
+                        printf("I have finished reading one wave\n");
+                        if(count = 0) dac0_wave = wave;
+                        if(count = 1) dac1_wave = wave;
+                        count++;
+                    }
+                    else {
+                        printf("E: Exit with error message\n");
+                        exit(1);
+                    }
+                    break;
+        default: printf("No matches\n"); exit(1);
         }
-    else {
-    printf("Z: Exit with error message\n");
-    exit(1);
-    }
-    break;
-    case 'W': printf("I know which wave type\n"); wave = value; break;
-    case 'E':
-     if(value == 0.0) {
-   printf("I have finished reading one wave\n");
-   if(count = 0) dac0_wave = wave;
-      if(count = 1) dac1_wave = wave;
-      count++;
-   }
-    else {
-    printf("E: Exit with error message\n");
-    exit(1);
-    }
-    break;
-    }
-} while (terminate);
+    } while (terminate);
 
+    fclose(fp);
 
 }
 
@@ -164,45 +165,45 @@ void write_data_file(char filename[]) {
     FILE *fp;
     char str[200];
 
-    printf("I am going to write to file %s now\n", filename);
+    printf("Wave parameters are being saved to file %s\n", filename);
 
     fp=fopen(filename,"w");
     if (fp==NULL)
     {
-    perror("cannot open");
-    exit(1);
+        perror("cannot open");
+        exit(1);
     }
     printf("I am priting text to file now\n");
-    fprintf(fp, "%d W\n%f A\n%f M\n%f F\n0.0 E\n", dac0_wave,hello[dac0_wave].amplitude,hello[dac0_wave].mean,hello[dac0_wave].frequency);
+    fprintf(fp, "%d W\n%f A\n%f M\n%f F\n0.0 E\n", dac0_wave,wave_parameter[dac0_wave].amplitude,wave_parameter[dac0_wave].mean,wave_parameter[dac0_wave].frequency);
 
-
-    fprintf(fp, "%d W\n%f A\n%f M\n%f F\n0.0 E\n", dac1_wave,hello[dac1_wave].amplitude,hello[dac1_wave].mean,hello[dac1_wave].frequency);
+    fprintf(fp, "%d W\n%f A\n%f M\n%f F\n0.0 E\n", dac1_wave,wave_parameter[dac1_wave].amplitude,wave_parameter[dac1_wave].mean,wave_parameter[dac1_wave].frequency);
     fprintf(fp, "%f %c", 0.0, 'Z');
-delay(5000);
+    delay(2000);
+    printf("%s is now saved\n", filename);
     fclose(fp);
 }
 
 void wave_input_param(int wave_type) {
     // capture selected wave parameters
     do{
-	printf("Enter amplitude: ");
-	fgets(s, 30, stdin);
-	}while(toFloat(s) == -9999.0);
-	hello[wave_type].amplitude = toFloat(s) ;
+    	printf("Enter amplitude: ");
+    	fgets(s, 30, stdin);
+	} while(toFloat(s) == -9999.0);
+	wave_parameter[wave_type].amplitude = toFloat(s) ;
 	fflush(stdin);
 
 	do{
-	printf("Enter frequency: ");
-	fgets(s, 30, stdin);
-	}while(toFloat(s) == -9999.0);
-	hello[wave_type].frequency = toFloat(s);
+    	printf("Enter frequency: ");
+    	fgets(s, 30, stdin);
+	} while(toFloat(s) == -9999.0);
+	wave_parameter[wave_type].frequency = toFloat(s);
 	fflush(stdin);
 
 	do{
-	printf("Enter mean value: ");
-	fgets(s, 30, stdin);
+    	printf("Enter mean value: ");
+    	fgets(s, 30, stdin);
 	}while(toFloat(s) == -9999.0);
-	hello[wave_type].mean = toFloat(s);
+	wave_parameter[wave_type].mean = toFloat(s);
 	fflush(stdin);
 }
 
@@ -278,44 +279,60 @@ void tri_wave(wave value, int dac) {
 
 void data_point_calculation(int wave, int dac) {
     switch (wave) {
-        case 0: sine_wave(hello[wave], dac); break;
-        case 1: tri_wave(hello[wave], dac); break;
-        case 2: square_wave(hello[wave], dac); break;
+        case 0: sine_wave(wave_parameter[wave], dac); break;
+        case 1: tri_wave(wave_parameter[wave], dac); break;
+        case 2: square_wave(wave_parameter[wave], dac); break;
         default: printf("Something wrong, no data point calculated\n");break;
     }
 
 }
 void cmd_line(int count, char *arg[]) {
+    int number;
 	char **p_to_arg = &arg[1];
+	
+	number = 0;
 
 	while(--count && ((*p_to_arg)[0] == '-')) {
 		switch((*p_to_arg)[1]) {
 			case 'a':   printf("DAC (0) is selected\n");
             			p_to_arg++;
-            			printf("%s\n", (*p_to_arg));
             			wave_select(dac0, *p_to_arg[0]);
                         data_point_calculation(dac0_wave, dac0);
+                        number++;
             			--count;
             			p_to_arg++;
             			break;
 			case 'b':   printf("DAC (1) is selected\n");
             			p_to_arg++;
-            			printf("%s\n", (*p_to_arg));
             			wave_select(dac1, *p_to_arg[0]);
                         data_point_calculation(dac1_wave, dac1);
+                        number++;
             			--count;
             			p_to_arg++;
             			break;
 			case 'f':   printf("File Option\n");
             			p_to_arg++;
-            			printf("%s\n", (*p_to_arg));
                         read_data_file((*p_to_arg));
             			--count;
             			p_to_arg++;
             			break;
-			default:    printf("[Error!] Invalid Option\n\n"); break;
+			default:    printf("[Error!] Invalid Option. Please use argument -a | -b | -f. Exiting program.\n\n"); 
+                        delay(2000); 
+                        exit(0);
+                        break;
 		}
 	}
+	
+	if (number == 1) {
+	printf("[Error!] We need to have two waves. Exiting program\n");
+	delay(2000);
+	exit(1);
+	} else if( number > 2) {
+	printf("[Error!] Seems like there are too many waves. Exiting program\n");
+	delay(2000);
+	exit(1);
+	}
+
 }
 
 void return_string(char text[], int start, int end) {
@@ -333,7 +350,7 @@ void return_string(char text[], int start, int end) {
     result[length] = '\0';      // add NULL as "result" string terminator
 }
 
-void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[]) {
+void dac_capture(int dac, int dac_wave, char command[], int count, int indexing[]) {
     int i;
     for(i=1; i<(count/2); i++) {
         return_string(command, indexing[2*i], indexing[2*i+1]);
@@ -347,7 +364,7 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
                                 break;
                             }
                             else
-                                hello[dac_wave].amplitude = toFloat(result);
+                                wave_parameter[dac_wave].amplitude = toFloat(result);
                             break;
                 case('f'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is frequency of %f\n", toFloat(result));
@@ -356,7 +373,7 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
                                 break;
                             }
                             else
-                                hello[dac_wave].frequency = toFloat(result);
+                                wave_parameter[dac_wave].frequency = toFloat(result);
                             break;
                 case('m'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is mean of %f\n", toFloat(result));
@@ -365,7 +382,7 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
                                 break;
                             }
                             else
-                                hello[dac_wave].mean = toFloat(result);
+                                wave_parameter[dac_wave].mean = toFloat(result);
                             break;
                 case('n'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is mean of %f\n", toFloat(result));
@@ -392,15 +409,15 @@ void *output_config() {
         printf("\n\nDAC (0)\n");
         printf("-------------------------------------------------------------------------------------------------------------\n");
         printf("Type (0): %s\n", name_type[dac0_wave]);
-        printf("Amplitude (0): %lf\n", hello[dac0_wave].amplitude);
-        printf("Mean Value (0): %lf\n", hello[dac0_wave].mean);
-        printf("Frequency (0): %lf\n", hello[dac0_wave].frequency);
+        printf("Amplitude (0): %lf\n", wave_parameter[dac0_wave].amplitude);
+        printf("Mean Value (0): %lf\n", wave_parameter[dac0_wave].mean);
+        printf("Frequency (0): %lf\n", wave_parameter[dac0_wave].frequency);
         printf("\n\nDAC (1)\n");
         printf("-------------------------------------------------------------------------------------------------------------\n");
         printf("Type (1): %s\n",name_type[dac1_wave]);
-        printf("Amplitude (1): %lf\n", hello[dac1_wave].amplitude);
-        printf("Mean Value (1): %lf\n", hello[dac1_wave].mean);
-        printf("Frequency (1): %lf\n", hello[dac1_wave].frequency);
+        printf("Amplitude (1): %lf\n", wave_parameter[dac1_wave].amplitude);
+        printf("Mean Value (1): %lf\n", wave_parameter[dac1_wave].mean);
+        printf("Frequency (1): %lf\n", wave_parameter[dac1_wave].frequency);
         if(errorGlobal == 1){
         	printf("\n\n*************************************************************************************************************\n[Error!] Too many switches turned on!\n[Error!] Please only turn on 1 of the 3 switches: Frequency, Amplitude, Mean\n\n*************************************************************************************************************\n");
             errorGlobal = 0;
@@ -444,7 +461,6 @@ void *input_server() {
         //printf("Enter command: ");
         fflush(stdin);
         fgets(s, 30, stdin);
-        printf("length: %d\n", strlen(s));
 
         j = 0;
         index[j] = 0;
@@ -467,15 +483,20 @@ void *input_server() {
         return_string(s, index[2*i], index[2*i+1]);
         if(strcmp(result, "dac0") == 0) {
             //printf("DAC0 is captured\n");
-            adc_capture(dac0, dac0_wave, s, j, index);
+            dac_capture(dac0, dac0_wave, s, j, index);
         }
         else if (strcmp(result, "dac1") == 0) {
             //printf("DAC1 is captured\n");
-            adc_capture(dac1, dac1_wave, s, j, index);
+            dac_capture(dac1, dac1_wave, s, j, index);
         }
         else if (strcmp(result, "saveparam") == 0) {
             //printf("DAC1 is captured\n");
-            adc_capture(dac1, dac1_wave, s, j, index);
+            dac_capture(dac1, dac1_wave, s, j, index);
+        }
+        else {
+            printf("[Error!]Please input correct command\n");
+            printf("[Error!]Please wait while page refreshing\n");
+            delay(2000);
         }
         // printf("Enter something to proceed: \n");
         // gets(s);
@@ -672,7 +693,7 @@ void *board_input(void* arg)
                         {
                             pthread_cond_wait(&cond, &mutex);
                         }
-                        hello[dac0_wave].frequency = frequency;
+                        wave_parameter[dac0_wave].frequency = frequency;
                     }
                     else if(ampSwitch == 1)
                     {
@@ -682,7 +703,7 @@ void *board_input(void* arg)
                         {
                             pthread_cond_wait(&cond, &mutex);
                         }
-                        hello[dac0_wave].amplitude = amplitude;
+                        wave_parameter[dac0_wave].amplitude = amplitude;
                     }
                     else if(meanSwitch == 1)
                     {
@@ -692,7 +713,7 @@ void *board_input(void* arg)
                         {
                             pthread_cond_wait(&cond, &mutex);
                         }
-                        hello[dac0_wave].mean = mean;
+                        wave_parameter[dac0_wave].mean = mean;
                     }
                     data_point_calculation(dac0_wave, dac0);
                 }
@@ -706,7 +727,7 @@ void *board_input(void* arg)
                         {
                             pthread_cond_wait(&cond, &mutex);
                         }
-                        hello[dac1_wave].frequency = frequency;
+                        wave_parameter[dac1_wave].frequency = frequency;
                     }
                     else if(ampSwitch == 1)
                     {
@@ -716,7 +737,7 @@ void *board_input(void* arg)
                         {
                             pthread_cond_wait(&cond, &mutex);
                         }
-                        hello[dac1_wave].amplitude = amplitude;
+                        wave_parameter[dac1_wave].amplitude = amplitude;
                     }
                     else if(meanSwitch == 1)
                     {
@@ -726,7 +747,7 @@ void *board_input(void* arg)
                         {
                             pthread_cond_wait(&cond, &mutex);
                         }
-                        hello[dac1_wave].mean = mean;
+                        wave_parameter[dac1_wave].mean = mean;
                     }
                     data_point_calculation(dac1_wave, dac1);
                 }
@@ -772,8 +793,8 @@ void *wave_generator() {
             tick = 0;
         }
 
-        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000));    //frequency offset for DAC0
-        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000));    //frequency offset for DAC1
+        i += ((wave_parameter[dac0_wave].frequency * resolution) * (accum / 10000));    //frequency offset for DAC0
+        j += ((wave_parameter[dac1_wave].frequency * resolution) * (accum / 10000));    //frequency offset for DAC1
 
         if(i>200) i = 0;
         if(j>200) j = 0;
@@ -810,8 +831,6 @@ void initialize() {
     }
 
     // Determine assigned BADRn IO addresses for PCI-DAS1602
-
-    printf("\nDAS 1602 Base addresses:\n\n");
     for(i=0;i<5;i++) {
         badr[i]=PCI_IO_ADDR(info.CpuBaseAddress[i]);
     }
@@ -830,9 +849,6 @@ void signal_handler()
 {
     int i;
     int rc;
-
-
-    printf("\nSignal raised by user\n");
 
     if (t==0) {
         printf("Program is exiting.\n");
@@ -872,11 +888,15 @@ int main(int argc, char *argv[]) {
     printf("Initialization complete.\n\n");
 
     // array of 3 wave struct
-	if ((hello=(wave *)malloc(3 * sizeof(wave))) == NULL) {
+	if ((wave_parameter=(wave *)malloc(4 * sizeof(wave))) == NULL) {
 	    printf("Not enough memory\n");
 	    exit(0);
 	}
 
+    wave_parameter[3].amplitude = 0;
+    wave_parameter[3].mean = 0;
+    wave_parameter[3].frequency = 0;
+    
     // array of 2 dac_data struct
     if ((database=(dac_data *)malloc(2 * sizeof(dac_data))) == NULL) {
         printf("Not enough memory\n");
@@ -884,7 +904,13 @@ int main(int argc, char *argv[]) {
     }
 
     // extract command line argument
-	cmd_line(argc, argv);
+    if (argc < 3)  {
+        printf("Missing argument. Exiting program\n");
+        delay(2000);
+        exit(0);
+    }
+	
+    cmd_line(argc, argv);
 
     // start threads
     t = 0;
@@ -914,7 +940,6 @@ int main(int argc, char *argv[]) {
         printf("ERROR; return code from pthread_create() is %d\n", rc);
         exit(-1);
     }
-
 
     pthread_exit(NULL);     // wait all threads complete before terminating main
 
