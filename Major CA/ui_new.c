@@ -237,7 +237,7 @@ void sine_wave(wave value, int dac) {
         dummysine= ((value.amplitude * sinf((float)(i*delta))) + value.mean); //equation for sine wave
         if(dummysine > 5)        dummysine = 5;
         else if(dummysine < 0)   dummysine = 0;
-        database[dac].point_value[i]= (unsigned) (dummysine * 0x3333);   // add offset +  scale
+        database[dac].point_value[i]= (unsigned) (dummysine * 0x3333);   // scale to 5V
     }
 }
 
@@ -247,16 +247,16 @@ void square_wave(wave value, int dac) {
     //square wave//
     for(i=0; i<resolution; i++) {
         if(i < resolution/2) {
-            dummysquare = value.mean - value.amplitude;
+            dummysquare = value.mean - value.amplitude; //equation for lower square wave
             if(dummysquare<0) dummysquare = 0;
             else if(dummysquare>5)dummysquare = 5;
-            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333);
+            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333); //scale to 5V
         }
         else {
-            dummysquare=value.mean + value.amplitude;   //amplitude can be change
+            dummysquare=value.mean + value.amplitude; //equation for upper square wave
             if(dummysquare<0) dummysquare = 0;
             else if(dummysquare>5) dummysquare = 5;
-            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333);
+            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333); //scale to 5V
         }
     }
 }
@@ -268,7 +268,7 @@ void tri_wave(wave value, int dac) {
         dummytri= ((value.amplitude*2*asinf((sinf((float)(i*delta))))/3.1416) + value.mean);  //equation for triangle wave
         if(dummytri > 5)        dummytri = 5;
         else if(dummytri < 0)   dummytri = 0;
-        database[dac].point_value[i]= (unsigned) (dummytri * 0x3333);   // add offset +  scale
+        database[dac].point_value[i]= (unsigned) (dummytri * 0x3333);  //scale to 5V
     }
 }
 
@@ -754,7 +754,7 @@ void *wave_generator() {
                 perror("clock gettime");
                 exit(EXIT_FAILURE);
             }
-            accum = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / BILLION;
+            accum = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / BILLION; //time interval for each loop
             if(clock_gettime(CLOCK_REALTIME, &start) == -1) {
                 perror("clock gettime");
                 exit(EXIT_FAILURE);
@@ -762,8 +762,8 @@ void *wave_generator() {
             tick = 0;
         }
 
-        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000));                   // 10000/accum = resolution / time
-        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000));
+        i += ((hello[dac0_wave].frequency * resolution) * (accum / 10000)); //offset for frequency of output wave for dac0
+        j += ((hello[dac1_wave].frequency * resolution) * (accum / 10000)); //offset for frequency of output wave for dac1
 
         if(i>200) i = 0;
         if(j>200) j = 0;
