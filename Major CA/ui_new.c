@@ -238,7 +238,7 @@ void sine_wave(wave value, int dac) {
         dummysine= ((value.amplitude * sinf((float)(i*delta))) + value.mean); //equation for sine wave
         if(dummysine > 5)        dummysine = 5;
         else if(dummysine < 0)   dummysine = 0;
-        database[dac].point_value[i]= (unsigned) (dummysine * 0x3333);   // add offset +  scale
+        database[dac].point_value[i]= (unsigned) (dummysine * 0x3333);   // scale to 5V
     }
 }
 
@@ -248,16 +248,16 @@ void square_wave(wave value, int dac) {
     //square wave//
     for(i=0; i<resolution; i++) {
         if(i < resolution/2) {
-            dummysquare = value.mean - value.amplitude;
+            dummysquare = value.mean - value.amplitude; //equation for lower square wave
             if(dummysquare<0) dummysquare = 0;
             else if(dummysquare>5)dummysquare = 5;
-            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333);
+            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333); //scale to 5V
         }
         else {
-            dummysquare=value.mean + value.amplitude;   //amplitude can be change
+            dummysquare=value.mean + value.amplitude;  //equation for upper square wave
             if(dummysquare<0) dummysquare = 0;
             else if(dummysquare>5) dummysquare = 5;
-            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333);
+            database[dac].point_value[i] = (unsigned)(dummysquare*0x3333); //scale to 5V
         }
     }
 }
@@ -269,7 +269,7 @@ void tri_wave(wave value, int dac) {
         dummytri= ((value.amplitude*2*asinf((sinf((float)(i*delta))))/3.1416) + value.mean);  //equation for triangle wave
         if(dummytri > 5)        dummytri = 5;
         else if(dummytri < 0)   dummytri = 0;
-        database[dac].point_value[i]= (unsigned) (dummytri * 0x3333);   // add offset +  scale
+        database[dac].point_value[i]= (unsigned) (dummytri * 0x3333); //scale to 5V
     }
 }
 
@@ -339,21 +339,16 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
             switch(result[1]) {
                 case('a'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is amplitude of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0)
-                            {
+                            if(toFloat(result) == -9999.0){
                                 errorGlobal = 2;
                                 break;
                             }
                             else
-                            {
                                 hello[dac_wave].amplitude = toFloat(result);
-
-                            }
                             break;
                 case('f'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is frequency of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0)
-                            {
+                            if(toFloat(result) == -9999.0){
                                 errorGlobal = 2;
                                 break;
                             }
@@ -362,8 +357,7 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
                             break;
                 case('m'):  return_string(command, indexing[2*i], indexing[2*i+1]);
                             //printf("it is mean of %f\n", toFloat(result));
-                            if(toFloat(result) == -9999.0)
-                            {
+                            if(toFloat(result) == -9999.0){
                                 errorGlobal = 2;
                                 break;
                             }
@@ -374,7 +368,6 @@ void adc_capture(int dac, int dac_wave, char command[], int count, int indexing[
                             //printf("it is mean of %f\n", toFloat(result));
                             printf("filename is %s\n", result);
                             write_data_file(result);
-
                             break;
                 default:    printf("No matches\n");
                             break;
@@ -405,13 +398,11 @@ void *output_config() {
         printf("Amplitude (1): %lf\n", hello[dac1_wave].amplitude);
         printf("Mean Value (1): %lf\n", hello[dac1_wave].mean);
         printf("Frequency (1): %lf\n", hello[dac1_wave].frequency);
-        if(errorGlobal == 1)
-        {
+        if(errorGlobal == 1){
         	printf("\n\n*************************************************************************************************************\n[Error!] Too many switches turned on!\n[Error!] Please only turn on 1 of the 3 switches: Frequency, Amplitude, Mean\n\n*************************************************************************************************************\n");
             errorGlobal = 0;
         }
-        else if(errorGlobal == 2)
-        {
+        else if(errorGlobal == 2){
             printf("\n\n*************************************************************************************************************\n[Error!] Input contain non-digit character, please key in again.\n\n*************************************************************************************************************\n");
         	errorGlobal = 0;
         }
