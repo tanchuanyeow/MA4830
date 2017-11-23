@@ -54,7 +54,7 @@ int dac0, dac1;     // dac for each dac output
 int dac0_wave, dac1_wave;     // wave type identifier for each dac output
 int resolution;
 float delta;
-int errorGlobal;
+int errorGlobal;    //tells output_config thread what error message to print
 
 typedef struct {
     float amplitude;
@@ -510,11 +510,8 @@ void *board_input(void* arg)
 {
     //Raw digital switches reading
     uintptr_t digitalSwitch;
-	uint16_t potentiometerReading1, potentiometerReading2;
-    //int digitalSwitch;
     //Raw potentiometer readings
-    //int potentiometerReading1;
-    //int potentiometerReading2;
+	uint16_t potentiometerReading1, potentiometerReading2;
     //Previous Readings
     int previousSwitch = -1;
     int previousPot1 = -1;
@@ -534,14 +531,13 @@ void *board_input(void* arg)
     float frequency;
     float mean;
     float amplitude;
-    int potentiometerSelection;        //1 indicates that you want to change wave1, 2 indicates that you want to change wave2
-    int freqSwitch;           //switch to turn on/off edit mode for frequency.0 = OFF,1 = ON
-    int meanSwitch;           //switch to turn on/off edit mode for mean value.0 = OFF,1 = ON
-    int ampSwitch;            //switch to turn on/off edit mode for amplitude.0 = OFF,1 = ON
-    int pot1Scale;            //Scale of ADC0 reading
-    int pot2Scale;            //Scale of ADC1 reading
-    //int condition;        //To tell the display thread to update its display. 0 = Don't update,1 = Update
-    int error;                //To tell the display thread what error message to display
+    int potentiometerSelection;//1- adjust potentiometer 1, 2-adjust potentiometer 2
+    int freqSwitch;//switch to turn on/off edit mode for frequency.0 = OFF,1 = ON
+    int meanSwitch;//switch to turn on/off edit mode for mean value.0 = OFF,1 = ON
+    int ampSwitch;//switch to turn on/off edit mode for amplitude.0 = OFF,1 = ON
+    int pot1Scale;//Scale of ADC0 reading
+    int pot2Scale;//Scale of ADC1 reading
+         
 
     unsigned int i, count;
     unsigned short chan;
@@ -554,43 +550,35 @@ void *board_input(void* arg)
         //Digital Port Functions
         //*****************************************************************************
         out8(DIO_CTLREG,0x90);                  // Port A : Input,  Port B : Output,  Port C (upper | lower) : Output | Output
-
         digitalSwitch=in8(DIO_PORTA);           // Read Port A
-        //printf("[Streaming]Raw Digital Switch Port A : %02x\n", digitalSwitch);
-
-        //fflush(stdout);                       //Might need***************************
 
         //******************************************************************************
         // ADC Port Functions
         //******************************************************************************
         // Initialise Board
         out16(INTERRUPT,0x60c0);                // sets interrupts   - Clears
-        out16(TRIGGER,0x2081);                   // sets trigger control: 10MHz, clear, Burst off,SW trig. default:20a0
-        out16(AUTOCAL,0x007f);                   // sets automatic calibration : default
-
-        out16(AD_FIFOCLR,0);                        // clear ADC buffer
-        out16(MUXCHAN,0x0D00);                // Write to MUX register - SW trigger, UP, SE, 5v, ch 0-0
-                                                                 // x x 0 0 | 1  0  0 1  | 0x 7   0 | Diff - 8 channels
-                                                                 // SW trig |Diff-Uni 5v| scan 0-7| Single - 16 channels
+        out16(TRIGGER,0x2081);                  // sets trigger control: 10MHz, clear, Burst off,SW trig. default:20a0
+        out16(AUTOCAL,0x007f);                  // sets automatic calibration : default
+        out16(AD_FIFOCLR,0);                    // clear ADC buffer
+        out16(MUXCHAN,0x0D00);                  // Write to MUX register - SW trigger, UP, SE, 5v, ch 0-0
+                                                // x x 0 0 | 1  0  0 1  | 0x 7   0 | Diff - 8 channels
+                                                // SW trig |Diff-Uni 5v| scan 0-7| Single - 16 channels
         count=0x00;
         while(count <0x02)
         {
             chan= ((count & 0x0f)<<4) | (0x0f & count);
             out16(MUXCHAN,0x0D00|chan);                  // Set channel   - burst mode off.
-            delay(1);                                                     // allow mux to settle
-            out16(AD_DATA,0);                                      // start ADC
+            delay(1);                                    // allow mux to settle
+            out16(AD_DATA,0);                            // start ADC
             while(!(in16(MUXCHAN) & 0x4000));
             if(count == 0x00)
             {
                 potentiometerReading1=in16(AD_DATA);
-                //printf("[Streaming]Raw Potentiometer 1 ---ADC Chan: %02x Data [%3d]: %4x \n", chan, (int)count, (unsigned int)potentiometerReading1);       // print ADC
             }
             else
             {
                 potentiometerReading2=in16(AD_DATA);
-                //printf("[Streaming]Raw Potentiometer 2 ---ADC Chan: %02x Data [%3d]: %4x \n", chan, (int)count, (unsigned int)potentiometerReading2);       // print ADC
             }
-            //printf("ADC Chan: %02x Data [%3d]: %4x \n", chan, (int)count, (unsigned int)adc_in);      // print ADC
             fflush( stdout );
             count++;
             delay(5);                               // Write to MUX register - SW trigger, UP, DE, 5v, ch 0-7
@@ -599,16 +587,12 @@ void *board_input(void* arg)
 
 
         //Process Raw data to filter out noise and unwanted bits
-        digitalSwitch= digitalSwitch & 0x0f;    //Might not need***********************
-        //printf("[Streaming]Edited Digital Switch Port A : %02x\n", digitalSwitch);
-        potentiometerReading1 = potentiometerReading1 & 0xfe00;  //bitwise AND operation to remove noise(LSB 16bits)
-        potentiometerReading2 = potentiometerReading2 & 0xfe00;  //bitwise AND operation to remove noise(LSB 16bits)
-        //printf("[Streaming]Edited Potentiometer 1: %4x \n",(unsigned int)potentiometerReading1);
-        //printf("[Streaming]Edited Potentiometer 2: %4x \n",(unsigned int)potentiometerReading2);
+        digitalSwitch= digitalSwitch & 0x0f;    
+        potentiometerReading1 = potentiometerReading1 & 0xfe00;  //bitwise AND operation to remove noise(LSB 9bits)
+        potentiometerReading2 = potentiometerReading2 & 0xfe00;  //bitwise AND operation to remove noise(LSB 9bits)
+        potentiometerSelection = (digitalSwitch & 0x08)>>3;      //rightshift 3 bits
 
-
-        potentiometerSelection = (digitalSwitch & 0x08)>>3;
-
+        //Check conditions to update global parameters
         if(digitalSwitch != 0x00 && digitalSwitch != 0x08)
         {
             if(digitalSwitch != previousSwitch)
@@ -653,22 +637,20 @@ void *board_input(void* arg)
         if(updated)
         {
             //Extract the value for each bit of port A digital i/o switches
-
             freqSwitch = (digitalSwitch & 0x04)>>2;
             ampSwitch = (digitalSwitch & 0x02)>>1;
             meanSwitch = digitalSwitch & 0x01;
 
 
             //Right shift the potentiometer reading
-            pot1Scale = potentiometerReading1 >> 9;  //Rightshift 8 bits
-            pot2Scale = potentiometerReading2 >> 9;  //Rightshift 8 bits
+            pot1Scale = potentiometerReading1 >> 9;  //Rightshift 9 bits
+            pot2Scale = potentiometerReading2 >> 9;  //Rightshift 9 bits
 
 
             //Error Checking for frequency,amplitude and mean switches
             if((freqSwitch && ampSwitch) || (freqSwitch && meanSwitch) || (ampSwitch && meanSwitch) || (freqSwitch && ampSwitch && meanSwitch))
             {
                 previousSwitch = digitalSwitch;
-                //printf("[Error:BOARD INPUT] Too many switches turned on. Attemping to get mutex\n");
                 pthread_mutex_lock(&mutex);
                 while(condition == 1)
                 {
@@ -682,7 +664,6 @@ void *board_input(void* arg)
             }
             else //Calculate the value of the parameter to be changed
             {
-            	//printf("[BOARD_INPUT]Updating global parameters. Attemping to get mutex\n");
                 if(potentiometerSelection == 0)
                 {
                     if(freqSwitch == 1)
@@ -755,7 +736,6 @@ void *board_input(void* arg)
 
                 pthread_cond_broadcast(&cond);
                 pthread_mutex_unlock(&mutex);
-                //printf("[BOARD_INPUT] mutex unlocked\n");
             }
 
         }
@@ -894,7 +874,8 @@ int main(int argc, char *argv[]) {
 	}
 
     wave_parameter[3].amplitude = 0;
-    wave_parameter[3].mean = 0;
+
+    wave_parameter[3].mean = 0;
     wave_parameter[3].frequency = 0;
     
     // array of 2 dac_data struct
