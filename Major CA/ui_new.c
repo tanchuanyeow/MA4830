@@ -599,7 +599,6 @@ void *board_input(void* arg)
             {
                 previousSwitch = digitalSwitch;
                 updated = 1;
-                printf("[Updated]Digital Switch Port A : %02x\n", digitalSwitch);
                 if(potentiometerSelection == 0)
                 {
                     previousPot1 = potentiometerReading1;
@@ -616,7 +615,6 @@ void *board_input(void* arg)
                     if(potentiometerReading1 != previousPot1)
                     {
                         previousPot1 = potentiometerReading1;
-                        printf("[Updated]Potentiometer 1 :%4x\n", (unsigned int)potentiometerReading1);
                         updated = 1;
                     }
                 }
@@ -625,7 +623,6 @@ void *board_input(void* arg)
                     if(potentiometerReading2 != previousPot2)
                     {
                         previousPot2 = potentiometerReading2;
-                        printf("[Updated]Potentiometer 1 :%4x\n", (unsigned int)potentiometerReading2);
                         updated = 1;
                     }
                 }
